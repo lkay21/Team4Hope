@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+from src.cli.main import main
+
+if name == "main":
+    # All output goes to stdout per spec
+    # Exit code should be 0 on success, non-zero on failure
+    raise SystemExit(main())
