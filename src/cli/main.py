@@ -19,11 +19,43 @@ def evaluate_url(u: str) -> Dict[str, Any]:
     # Return the required fields incl. overall score and subscores
     return {
         "url": u,
-        "scores": {"size": None, "license": None, "ramp_up_time": None, "bus_factor": None,
-                   "dataset_code_availability": None, "dataset_quality": None, "code_quality": None,
-                   "performance_claims": None},
+        "scores": {"size": {"score": None, "latency": None}, "license": {"score": None, "latency": None}, "ramp_up_time": {"score": None, "latency": None}, "bus_factor": {"score": None, "latency": None},
+                   "dataset_and_code_score": {"score": None, "latency": None}, "dataset_quality": {"score": None, "latency": None}, "code_quality": {"score": None, "latency": None},
+                   "performance_claims": {"score": None, "latency": None}},
         "overall": None
     }
+
+def validate_ndjson(record: Dict[str, Any]) -> bool:
+    required_fields = {"url", "scores", "overall"}
+    score_fields = {"size", "license", "ramp_up_time", "bus_factor",
+                    "dataset_and_code_score", "dataset_quality", "code_quality",
+                    "performance_claims"}
+    if not required_fields.issubset(record.keys()):
+        return False
+    if not isinstance(record["scores"], dict):
+        return False
+    if not score_fields.issubset(record["scores"].keys()):
+        return False
+    for field in score_fields:
+        metric = record["scores"][field]
+        if not isinstance(metric, dict):
+            return False
+        if "score" not in metric or "latency" not in metric:
+            return False
+        # score can be none or float between 0 and 1
+        if metric["score"] is not None:
+            if not isinstance(metric["score"], (int, float)):
+                return False
+            if not (0 <= metric["score"] <= 1):
+                return False
+        # latency can be none or int (milliseconds)
+        if metric["latency"] is not None and not isinstance(metric["latency"], int):
+            return False
+        
+    # overall can be none, int, or float
+    if record["overall"] is not None and not isinstance(record["overall"], (int, float)):
+        return False
+    return True
 
 def main() -> int:
     args = parse_args()
@@ -46,7 +78,10 @@ def main() -> int:
             for u in args.urls:
                 rec = evaluate_url(u)
                 if args.ndjson:
-                    print(json.dumps(rec))
+                    if validate_ndjson(rec):
+                        print(json.dumps(rec))
+                    else:
+                        print(f"ERROR: Invalid record for URL {u}", file=sys.stderr)
                 else:
                     print(rec) 
             return 0
