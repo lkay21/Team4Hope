@@ -27,17 +27,22 @@ def evaluate_url(u: str) -> Dict[str, Any]:
     }
 
 def validate_ndjson(record: Dict[str, Any]) -> bool:
-
-    score_fields = {"name", "category", "net_score", "ramp_up_time", "bus_factor", "performance_claims", "license",
+    string_fields = {"name", "category"}
+    score_fields = {"net_score", "ramp_up_time", "bus_factor", "performance_claims", "license",
                     "size_score", "dataset_and_code_score", "dataset_quality", "code_quality"}
     latency_fields = {"net_score_latency", "ramp_up_time_latency", "bus_factor_latency",
                       "performance_claims_latency", "license_latency", "size_score_latency",
                       "dataset_and_code_score_latency", "dataset_quality_latency", "code_quality_latency"}
     
+
     if not isinstance(record, dict):
         return False
-    if not score_fields.issubset(record.keys()) or not latency_fields.issubset(record.keys()):
+    if not score_fields.issubset(record.keys()) or not latency_fields.issubset(record.keys()) or not string_fields.issubset(record.keys()):
         return False
+
+    for string in string_fields:
+        if not isinstance(record[string], (str, type(None))):
+            return False
     
     for score in score_fields:
 
@@ -90,7 +95,6 @@ def main() -> int:
                         print(f"ERROR: Invalid record for URL {u}", file=sys.stderr)
                 else:
                     print(rec)
-
             return 0
         
     except Exception as e:
