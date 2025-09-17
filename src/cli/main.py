@@ -18,7 +18,7 @@ def evaluate_url(u: str) -> Dict[str, Any]:
     # For now, return a dummy record
     # Return the required fields incl. overall score and subscores
     return {
-        "name": None, "category": None, "net_score": None, "net_score_latency": None, "ramp_up_time": None,
+        "name": u, "category": None, "net_score": None, "net_score_latency": None, "ramp_up_time": None,
                    "ramp_up_time_latency": None, "bus_factor": None, "bus_factor_latency": None,"performance_claims": None,
                    "performance_claims_latency": None, "license": None, "license_latency": None,
                    "size_score": {"raspberry_pi": None, "jetson_nano": None, "desktop_pc": None, "aws_server": None},
