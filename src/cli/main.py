@@ -18,43 +18,54 @@ def evaluate_url(u: str) -> Dict[str, Any]:
     # For now, return a dummy record
     # Return the required fields incl. overall score and subscores
     return {
-        "url": u,
-        "scores": {"size": {"score": None, "latency": None}, "license": {"score": None, "latency": None}, "ramp_up_time": {"score": None, "latency": None}, "bus_factor": {"score": None, "latency": None},
-                   "dataset_and_code_score": {"score": None, "latency": None}, "dataset_quality": {"score": None, "latency": None}, "code_quality": {"score": None, "latency": None},
-                   "performance_claims": {"score": None, "latency": None}},
-        "overall": None
+        "name": u, "category": None, "net_score": None, "net_score_latency": None, "ramp_up_time": None,
+                   "ramp_up_time_latency": None, "bus_factor": None, "bus_factor_latency": None,"performance_claims": None,
+                   "performance_claims_latency": None, "license": None, "license_latency": None,
+                   "size_score": {"raspberry_pi": None, "jetson_nano": None, "desktop_pc": None, "aws_server": None},
+                   "size_score_latency": None, "dataset_and_code_score": None, "dataset_and_code_score_latency": None,
+                   "dataset_quality": None, "dataset_quality_latency": None, "code_quality": None, "code_quality_latency": None
     }
 
 def validate_ndjson(record: Dict[str, Any]) -> bool:
-    required_fields = {"url", "scores", "overall"}
-    score_fields = {"size", "license", "ramp_up_time", "bus_factor",
-                    "dataset_and_code_score", "dataset_quality", "code_quality",
-                    "performance_claims"}
-    if not required_fields.issubset(record.keys()):
+    string_fields = {"name", "category"}
+    score_fields = {"net_score", "ramp_up_time", "bus_factor", "performance_claims", "license",
+                    "size_score", "dataset_and_code_score", "dataset_quality", "code_quality"}
+    latency_fields = {"net_score_latency", "ramp_up_time_latency", "bus_factor_latency",
+                      "performance_claims_latency", "license_latency", "size_score_latency",
+                      "dataset_and_code_score_latency", "dataset_quality_latency", "code_quality_latency"}
+    
+
+    if not isinstance(record, dict):
         return False
-    if not isinstance(record["scores"], dict):
+    if not score_fields.issubset(record.keys()) or not latency_fields.issubset(record.keys()) or not string_fields.issubset(record.keys()):
         return False
-    if not score_fields.issubset(record["scores"].keys()):
-        return False
-    for field in score_fields:
-        metric = record["scores"][field]
-        if not isinstance(metric, dict):
+
+    for string in string_fields:
+        if not isinstance(record[string], (str, type(None))):
             return False
-        if "score" not in metric or "latency" not in metric:
-            return False
-        # score can be none or float between 0 and 1
-        if metric["score"] is not None:
-            if not isinstance(metric["score"], (int, float)):
-                return False
-            if not (0 <= metric["score"] <= 1):
-                return False
+    
+    for score in score_fields:
+
+        score_metric = record[score]
+        #if socre_metric is a dict, check inner values
+        if isinstance(score_metric, dict):
+            for k, v in score_metric.items():
+                if v is not None and (not isinstance(v, (float)) or not (0.00 <= v <= 1.00)):
+                    return False
+        else:
+            # score can be none or float between 0 and 1
+            if score_metric is not None:
+                if not isinstance(score_metric, (float)) or not (0.00 <= score_metric <= 1.00):
+                    return False
+                
+    for latency in latency_fields:
+
+        latency_metric = record[latency]
         # latency can be none or int (milliseconds)
-        if metric["latency"] is not None and not isinstance(metric["latency"], int):
-            return False
-        
-    # overall can be none, int, or float
-    if record["overall"] is not None and not isinstance(record["overall"], (int, float)):
-        return False
+        if latency_metric is not None:
+            if not isinstance(latency_metric, int) or latency_metric < 0:
+                return False
+                    
     return True
 
 def main() -> int:
@@ -83,7 +94,7 @@ def main() -> int:
                     else:
                         print(f"ERROR: Invalid record for URL {u}", file=sys.stderr)
                 else:
-                    print(rec) 
+                    print(rec)
             return 0
         
     except Exception as e:
