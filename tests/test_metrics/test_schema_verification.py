@@ -73,19 +73,19 @@ def test_validate_ndjson_valid_record():
 
 
 def test_validate_ndjson_invalid_record_missing_field():
-    bad = {"url": "x", "out":{}}
+    bad = {"name": "x","category": "x"}  # missing many required fields
     assert validate_ndjson(bad) is False
 
 
 def test_validate_ndjson_invalid_score_type():
     url = "https://huggingface.co/someuser/somemodel"
     rec = evaluate_url(url)
-    rec["out"]["size_score"]["raspberry_pi"] = "not-a-number"  # invalid type
+    rec["size_score"]["raspberry_pi"] = "not-a-number"  # invalid type
     assert validate_ndjson(rec) is False
 
 
 def test_validate_ndjson_invalid_latency_type():
     url = "https://huggingface.co/someuser/somemodel"
     rec = evaluate_url(url)
-    rec["out"]["size_score_latency"] = "fast"  # invalid type
+    rec["size_score_latency"] = "fast"  # invalid type
     assert validate_ndjson(rec) is False
