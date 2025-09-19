@@ -54,16 +54,16 @@ def test_evaluate_url_structure():
 
     # Check top-level keys
     assert "url" in rec
-    assert "scores" in rec
-    assert "overall" in rec
+    assert "out" in rec
 
     # Check URL is preserved
     assert rec["url"] == url
 
+    # No longer need for new schema
     # Check score fields exist with score + latency
-    for field, metric in rec["scores"].items():
-        assert "score" in metric
-        assert "latency" in metric
+    # for field, metric in rec["scores"].items():
+    #     assert "score" in metric
+    #     assert "latency" in metric
 
 
 def test_validate_ndjson_valid_record():

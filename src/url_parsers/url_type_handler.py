@@ -37,8 +37,7 @@ def handle_url(url: str) -> dict:
 
     category = get_url_category(url)
     if category:
-        name = url.rstrip('/').split('/')[-1]
+        return default_ndjson(url=url, category=category)
     else:
-        name = None
+        return default_ndjson(url=url)
 
-    return default_ndjson(name=name, category=category)

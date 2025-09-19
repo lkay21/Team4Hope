@@ -19,7 +19,7 @@ def evaluate_url(u: str) -> Dict[str, Any]:
     # TODO: dispatch to url_parsers and metrics, check URL type
     # For now, return a dummy record
     # Return the required fields incl. overall score and subscores
-    empty_metrics = default_ndjson(name=u)
+    empty_metrics = default_ndjson(u)
 
     if get_url_category(u) is None:
         return empty_metrics
@@ -37,16 +37,16 @@ def validate_ndjson(record: Dict[str, Any]) -> bool:
 
     if not isinstance(record, dict):
         return False
-    if not score_fields.issubset(record.keys()) or not latency_fields.issubset(record.keys()) or not string_fields.issubset(record.keys()):
+    if not score_fields.issubset(record["out"].keys()) or not latency_fields.issubset(record["out"].keys()) or not string_fields.issubset(record["out"].keys()):
         return False
 
     for string in string_fields:
-        if not isinstance(record[string], (str, type(None))):
+        if not isinstance(record["out"][string], (str, type(None))):
             return False
     
     for score in score_fields:
 
-        score_metric = record[score]
+        score_metric = record["out"][score]
         #if socre_metric is a dict, check inner values
         if isinstance(score_metric, dict):
             for k, v in score_metric.items():
@@ -60,7 +60,7 @@ def validate_ndjson(record: Dict[str, Any]) -> bool:
                 
     for latency in latency_fields:
 
-        latency_metric = record[latency]
+        latency_metric = record["out"][latency]
         # latency can be none or int (milliseconds)
         if latency_metric is not None:
             if not isinstance(latency_metric, int) or latency_metric < 0:
@@ -91,12 +91,13 @@ def main() -> int:
 
                 if args.ndjson:
                     if validate_ndjson(rec):
-                        print(json.dumps(rec))
+                        print(json.dumps(rec["out"]))
                     else:
-                        print(json.dumps({"name": u, "error": "Invalid record"}))
-                        
+                        name = u.rstrip('/').split('/')[-1]
+                        print(json.dumps({"name": name, "error": "Invalid record"}))
+
                 else:
-                    print(rec)
+                    print(rec["out"])
             return 0
         
     except Exception as e:
