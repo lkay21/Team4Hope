@@ -37,8 +37,6 @@ def validate_ndjson(record: Dict[str, Any]) -> bool:
 
     if not isinstance(record, dict):
         return False
-    if not isinstance(record, dict):
-        return False
     if not score_fields.issubset(record.keys()) or not latency_fields.issubset(record.keys()) or not string_fields.issubset(record.keys()):
         return False
 
