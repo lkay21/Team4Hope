@@ -43,7 +43,7 @@ def test_subprocess_url_output_ndjson():
     result = run_cli("--ndjson", url)
     assert result.returncode == 0
     rec = json.loads(result.stdout.strip())
-    assert rec["out"]["name"] == url.rstrip('/').split('/')[-1]
+    assert rec["name"] == url.rstrip('/').split('/')[-1]
     # Check for all expected top-level fields in the new schema
     expected_fields = [
         "name", "category", "net_score", "net_score_latency", "ramp_up_time", "ramp_up_time_latency",
@@ -52,7 +52,7 @@ def test_subprocess_url_output_ndjson():
         "dataset_quality", "dataset_quality_latency", "code_quality", "code_quality_latency"
     ]
     for field in expected_fields:
-        assert field in rec["out"]
+        assert field in rec
 
 
 # --------------------------
@@ -89,7 +89,7 @@ def test_direct_url_ndjson(capsys, monkeypatch):
     exit_code = main()
     captured = capsys.readouterr()
     rec = json.loads(captured.out.strip())
-    assert rec["out"]["name"] == url.rstrip('/').split('/')[-1]
+    assert rec["name"] == url.rstrip('/').split('/')[-1]
     expected_fields = [
         "name", "category", "net_score", "net_score_latency", "ramp_up_time", "ramp_up_time_latency",
         "bus_factor", "bus_factor_latency", "performance_claims", "performance_claims_latency", "license", "license_latency",
@@ -97,4 +97,4 @@ def test_direct_url_ndjson(capsys, monkeypatch):
         "dataset_quality", "dataset_quality_latency", "code_quality", "code_quality_latency"
     ]
     for field in expected_fields:
-        assert field in rec["out"]
+        assert field in rec
