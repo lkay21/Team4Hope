@@ -37,20 +37,18 @@ def validate_ndjson(record: Dict[str, Any]) -> bool:
 
     if not isinstance(record, dict):
         return False
-    if "url" not in record or "out" not in record:
+    if not isinstance(record, dict):
         return False
-    if not isinstance(record["out"], dict):
-        return False
-    if not score_fields.issubset(record["out"].keys()) or not latency_fields.issubset(record["out"].keys()) or not string_fields.issubset(record["out"].keys()):
+    if not score_fields.issubset(record.keys()) or not latency_fields.issubset(record.keys()) or not string_fields.issubset(record.keys()):
         return False
 
     for string in string_fields:
-        if not isinstance(record["out"][string], (str, type(None))):
+        if not isinstance(record[string], (str, type(None))):
             return False
     
     for score in score_fields:
 
-        score_metric = record["out"][score]
+        score_metric = record[score]
         #if socre_metric is a dict, check inner values
         if isinstance(score_metric, dict):
             for k, v in score_metric.items():
@@ -64,7 +62,7 @@ def validate_ndjson(record: Dict[str, Any]) -> bool:
                 
     for latency in latency_fields:
 
-        latency_metric = record["out"][latency]
+        latency_metric = record[latency]
         # latency can be none or int (milliseconds)
         if latency_metric is not None:
             if not isinstance(latency_metric, int) or latency_metric < 0:
@@ -94,7 +92,7 @@ def main() -> int:
                 rec = evaluate_url(u)
 
                 if args.ndjson:
-                    if validate_ndjson(rec):
+                    if validate_ndjson(rec["out"]):
                         print(json.dumps(rec["out"]))
                     else:
                         name = u.rstrip('/').split('/')[-1]
