@@ -39,7 +39,7 @@ def test_subprocess_test_command():
 
 
 def test_subprocess_url_output_ndjson():
-    url = "https://huggingface.co/bert-base-uncased"
+    url = "https://huggingface.co/google-bert/bert-base-uncased"
     result = run_cli("--ndjson", url)
     assert result.returncode == 0
     rec = json.loads(result.stdout.strip())
@@ -84,7 +84,7 @@ def test_direct_test_command(capsys, monkeypatch):
 
 
 def test_direct_url_ndjson(capsys, monkeypatch):
-    url = "https://huggingface.co/bert-base-uncased"
+    url = "https://huggingface.co/google-bert/bert-base-uncased"
     monkeypatch.setattr(sys, "argv", ["run", "--ndjson", url])
     exit_code = main()
     captured = capsys.readouterr()

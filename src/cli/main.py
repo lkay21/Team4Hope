@@ -41,7 +41,7 @@ def validate_ndjson(record: Dict[str, Any]) -> bool:
         return False
 
     for string in string_fields:
-        if not isinstance(record[string], (str, type(None))):
+        if not isinstance(record[string], (str, type(None))) and record[string] is not None:
             return False
     
     for score in score_fields:
