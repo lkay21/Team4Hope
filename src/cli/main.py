@@ -93,7 +93,8 @@ def main() -> int:
                     if validate_ndjson(rec):
                         print(json.dumps(rec))
                     else:
-                        print(f"ERROR: Invalid record for URL {u}", file=sys.stderr)
+                        print(json.dumps({"name": u, "error": "Invalid record"}))
+                        
                 else:
                     print(rec)
             return 0
