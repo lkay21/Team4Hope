@@ -3,7 +3,7 @@ import json
 import os
 import sys
 from typing import Any, Dict
-from url_parsers import handle_url, get_url_category
+from src.url_parsers import handle_url, get_url_category
 from src.cli.schema import default_ndjson
 
 def parse_args() -> argparse.Namespace:
