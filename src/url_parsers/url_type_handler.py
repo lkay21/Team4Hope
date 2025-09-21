@@ -5,6 +5,8 @@ Detects the type of a given URL and provides a handler interface.
 from typing import Literal, Optional
 import re
 from src.cli.schema import default_ndjson
+from src.metrics.ops_plan import default_ops
+from src.metrics.runner import run_metrics
 
 UrlCategory = Literal['MODEL', 'DATASET', 'CODE']
 
@@ -34,6 +36,11 @@ def handle_url(url: str) -> dict:
     """
 
     #TODO: fetch and compute actual metrics here, then pass them to default_ndjson
+
+    # context = {"url": url}
+    # ops = default_ops
+
+    # results, summary = run_metrics(ops, context=context)
 
     category = get_url_category(url)
     if category:
