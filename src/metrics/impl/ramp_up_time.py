@@ -10,7 +10,10 @@ class RampUpTimeMetric:
     id = "ramp_up_time"
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
+        import time
+        start = time.time()
         r = context.get("ramp", {})
         vals = [float(r[k]) for k in ("likes_norm","downloads_norm","recency_norm") if k in r]
         value = sum(vals)/len(vals) if vals else 0.0
-        return MetricResult(self.id, value, details={"components": vals}, binary=0, seconds=0.0)
+        seconds = time.time() - start
+        return MetricResult(self.id, value, details={"components": vals}, binary=0, seconds=seconds)

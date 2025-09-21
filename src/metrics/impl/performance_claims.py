@@ -10,6 +10,8 @@ class PerformanceClaimsMetric:
     id = "performance_claims"
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
+        import time
+        start = time.time()
         if "requirements_score" in context:
             value = float(context["requirements_score"])
             details = {"mode": "weighted", "requirements_score": value}
@@ -18,4 +20,5 @@ class PerformanceClaimsMetric:
             total = max(1, int(context.get("requirements_total", 1)))
             value = passed / total
             details = {"mode": "simple", "passed": passed, "total": total}
-        return MetricResult(self.id, value, details=details, binary=0, seconds=0.0)
+        seconds = time.time() - start
+        return MetricResult(self.id, value, details=details, binary=0, seconds=seconds)

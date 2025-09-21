@@ -11,11 +11,15 @@ class SizeMetric:
     id = "size"
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
+        import time
+        start = time.time()
         c = context.get("size_components", {})
-        parts = []
-        # Each input should already be normalized to 0..1 by your parser; if raw, do your own min/max.
-        for key in ("loc_norm", "db_norm", "params_norm", "artifacts_norm"):
-            if key in c:
-                parts.append(float(c[key]))
-        value = sum(parts)/len(parts) if parts else 0.0
-        return MetricResult(self.id, value, details={"used": parts}, binary=0, seconds=0.0)
+        hardware_keys = ["raspberry_pi", "jetson_nano", "desktop_pc", "aws_server"]
+        size_score = {}
+        for hw in hardware_keys:
+            # Default to 0 if not provided
+            size_score[hw] = float(c.get(hw, 0.0))
+        # Optionally, compute an overall value as the mean
+        value = sum(size_score.values()) / len(size_score) if size_score else 0.0
+        seconds = time.time() - start
+        return MetricResult(self.id, value, details={"size_score": size_score}, binary=0, seconds=seconds)
