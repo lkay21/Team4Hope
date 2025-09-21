@@ -28,7 +28,10 @@ class SizeMetric:
 
         size_score = {}
         for hw in hardware_keys:
-            size_score[hw] = float(c.get(hw, 0.0))  # default to 0 if missing
+            try:
+                size_score[hw] = float(c.get(hw, 0.0))  # default to 0 if missing
+            except (TypeError, ValueError):
+                size_score[hw] = 0.0
 
         # Compute overall value as the mean of available hardware scores
         value = sum(size_score.values()) / len(size_score) if size_score else 0.0
@@ -37,7 +40,7 @@ class SizeMetric:
         return MetricResult(
             id=self.id,
             value=value,
-            binary=0,
+            binary=1 if any(size_score.values()) else 0,
             details={"size_score": size_score},
             seconds=seconds,
         )
