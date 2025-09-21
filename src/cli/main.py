@@ -89,15 +89,11 @@ def main() -> int:
             for u in args.urls:
                 rec = evaluate_url(u)
 
-                if args.ndjson:
-                    if validate_ndjson(rec):
-                        print(json.dumps(rec))
-                    else:
-                        name = u.rstrip('/').split('/')[-1]
-                        print(json.dumps({"name": name, "error": "Invalid record"}))
-
+                if validate_ndjson(rec):
+                    print(json.dumps(rec))
                 else:
-                    print(rec)
+                    name = u.rstrip('/').split('/')[-1]
+                    print(json.dumps({"name": name, "error": "Invalid record"}))
             return 0
         
     except Exception as e:
