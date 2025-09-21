@@ -100,14 +100,4 @@ def run_metrics(
                 results[mid] = res
 
     summary = netscore(results, ops)
-
-    ns_lat = summary.get("net_score_latency", 0)
-    try:
-        ns_lat = float(ns_lat)
-    except Exception:
-        ns_lat = 0.0
-    if ns_lat < 0:
-        ns_lat = 0.0
-    summary["net_score_latency"] = int(ns_lat)
-
     return results, summary
