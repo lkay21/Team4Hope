@@ -10,9 +10,12 @@ class AvailabilityMetric:
     id = "availability"
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
+        import time
+        start = time.time()
         a = context.get("availability", {})
         has_code = bool(a.get("has_code", False))
         has_data = bool(a.get("has_dataset", False))
         links_ok = bool(a.get("links_ok", False))
         value = (has_code + has_data + links_ok) / 3.0
-        return MetricResult(self.id, value, details={"has_code": has_code, "has_dataset": has_data, "links_ok": links_ok}, binary=0, seconds=0.0)
+        seconds = time.time() - start
+        return MetricResult(self.id, value, details={"has_code": has_code, "has_dataset": has_data, "links_ok": links_ok}, binary=0, seconds=seconds)
