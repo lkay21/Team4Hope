@@ -146,9 +146,11 @@ def main() -> int:
             return 0
 
         if command == "test":
-            # The grader's "output syntax" check wants only this exact line
-            print("Running tests...not implemented yet.")
+            # Print exactly one line with no extra spaces; flush to be safe.
+            sys.stdout.write("Running tests...not implemented yet.\n")
+            sys.stdout.flush()
             return 0
+
 
         # Else: treat remaining args as direct URLs
         urls = args.args
