@@ -39,11 +39,11 @@ def test_subprocess_test_command():
 
 
 def test_subprocess_url_output_ndjson():
-    url = "https://huggingface.co/bert-base-uncased"
+    url = "https://huggingface.co/google-bert/bert-base-uncased"
     result = run_cli("--ndjson", url)
     assert result.returncode == 0
     rec = json.loads(result.stdout.strip())
-    assert rec["name"] == url
+    assert rec["name"] == url.rstrip('/').split('/')[-1]
     # Check for all expected top-level fields in the new schema
     expected_fields = [
         "name", "category", "net_score", "net_score_latency", "ramp_up_time", "ramp_up_time_latency",
@@ -84,12 +84,12 @@ def test_direct_test_command(capsys, monkeypatch):
 
 
 def test_direct_url_ndjson(capsys, monkeypatch):
-    url = "https://huggingface.co/bert-base-uncased"
+    url = "https://huggingface.co/google-bert/bert-base-uncased"
     monkeypatch.setattr(sys, "argv", ["run", "--ndjson", url])
     exit_code = main()
     captured = capsys.readouterr()
     rec = json.loads(captured.out.strip())
-    assert rec["name"] == url
+    assert rec["name"] == url.rstrip('/').split('/')[-1]
     expected_fields = [
         "name", "category", "net_score", "net_score_latency", "ramp_up_time", "ramp_up_time_latency",
         "bus_factor", "bus_factor_latency", "performance_claims", "performance_claims_latency", "license", "license_latency",

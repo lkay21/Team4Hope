@@ -4,6 +4,7 @@ Detects the type of a given URL and provides a handler interface.
 """
 from typing import Literal, Optional
 import re
+from src.cli.schema import default_ndjson
 
 UrlCategory = Literal['MODEL', 'DATASET', 'CODE']
 
@@ -31,13 +32,12 @@ def handle_url(url: str) -> dict:
     """
     Returns a dictionary with the detected category and name for the URL.
     """
+
+    #TODO: fetch and compute actual metrics here, then pass them to default_ndjson
+
     category = get_url_category(url)
     if category:
-        name = url.rstrip('/').split('/')[-1]
+        return default_ndjson(url=url, category=category)
     else:
-        name = None
-    return {
-        'url': url,
-        'category': category,
-        'name': name
-    }
+        return default_ndjson(url=url)
+

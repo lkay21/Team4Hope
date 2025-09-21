@@ -52,18 +52,20 @@ def test_evaluate_url_structure():
     url = "https://huggingface.co/someuser/somemodel"
     rec = evaluate_url(url)
 
-    # Check top-level keys
-    assert "url" in rec
-    assert "scores" in rec
-    assert "overall" in rec
+    assert isinstance(rec, dict)
+
+    # # Check top-level keys
+    # assert "url" in rec
+    # assert "out" in rec
 
     # Check URL is preserved
-    assert rec["url"] == url
+    # assert rec["url"] == url
 
+    # No longer need for new schema
     # Check score fields exist with score + latency
-    for field, metric in rec["scores"].items():
-        assert "score" in metric
-        assert "latency" in metric
+    # for field, metric in rec["scores"].items():
+    #     assert "score" in metric
+    #     assert "latency" in metric
 
 
 def test_validate_ndjson_valid_record():
@@ -73,19 +75,19 @@ def test_validate_ndjson_valid_record():
 
 
 def test_validate_ndjson_invalid_record_missing_field():
-    bad = {"url": "x", "scores": {}, "overall": None}
+    bad = {"name": "x","category": "x"}  # missing many required fields
     assert validate_ndjson(bad) is False
 
 
 def test_validate_ndjson_invalid_score_type():
     url = "https://huggingface.co/someuser/somemodel"
     rec = evaluate_url(url)
-    rec["scores"]["size"]["score"] = "not-a-number"  # invalid type
+    rec["size_score"]["raspberry_pi"] = "not-a-number"  # invalid type
     assert validate_ndjson(rec) is False
 
 
 def test_validate_ndjson_invalid_latency_type():
     url = "https://huggingface.co/someuser/somemodel"
     rec = evaluate_url(url)
-    rec["scores"]["size"]["latency"] = "fast"  # invalid type
+    rec["size_score_latency"] = "fast"  # invalid type
     assert validate_ndjson(rec) is False

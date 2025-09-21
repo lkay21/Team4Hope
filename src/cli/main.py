@@ -3,6 +3,8 @@ import json
 import os
 import sys
 from typing import Any, Dict
+from src.url_parsers import handle_url, get_url_category
+from src.cli.schema import default_ndjson
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="CLI for trustworthy model re-use")
@@ -17,14 +19,12 @@ def evaluate_url(u: str) -> Dict[str, Any]:
     # TODO: dispatch to url_parsers and metrics, check URL type
     # For now, return a dummy record
     # Return the required fields incl. overall score and subscores
-    return {
-        "name": u, "category": None, "net_score": None, "net_score_latency": None, "ramp_up_time": None,
-                   "ramp_up_time_latency": None, "bus_factor": None, "bus_factor_latency": None,"performance_claims": None,
-                   "performance_claims_latency": None, "license": None, "license_latency": None,
-                   "size_score": {"raspberry_pi": None, "jetson_nano": None, "desktop_pc": None, "aws_server": None},
-                   "size_score_latency": None, "dataset_and_code_score": None, "dataset_and_code_score_latency": None,
-                   "dataset_quality": None, "dataset_quality_latency": None, "code_quality": None, "code_quality_latency": None
-    }
+    empty_metrics = default_ndjson(u)
+
+    if get_url_category(u) is None:
+        return empty_metrics
+    else:
+        return handle_url(u)
 
 def validate_ndjson(record: Dict[str, Any]) -> bool:
     string_fields = {"name", "category"}
@@ -41,7 +41,7 @@ def validate_ndjson(record: Dict[str, Any]) -> bool:
         return False
 
     for string in string_fields:
-        if not isinstance(record[string], (str, type(None))):
+        if not isinstance(record[string], (str, type(None))) and record[string] is not None:
             return False
     
     for score in score_fields:
@@ -85,14 +85,17 @@ def main() -> int:
             return 0
         else:
             args.urls = args.args
-            
+
             for u in args.urls:
                 rec = evaluate_url(u)
+
                 if args.ndjson:
                     if validate_ndjson(rec):
                         print(json.dumps(rec))
                     else:
-                        print(f"ERROR: Invalid record for URL {u}", file=sys.stderr)
+                        name = u.rstrip('/').split('/')[-1]
+                        print(json.dumps({"name": name, "error": "Invalid record"}))
+
                 else:
                     print(rec)
             return 0

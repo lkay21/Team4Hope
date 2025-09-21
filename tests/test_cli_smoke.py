@@ -1,5 +1,8 @@
 from subprocess import run, PIPE
+import ast
 def test_run_smoke():
-    r = run(["./run", "https://huggingface.co/bert-base-uncased"], stdout=PIPE, text=True)
+    r = run(["./run", "https://huggingface.co/google-bert/bert-base-uncased"], stdout=PIPE, text=True)
     assert r.returncode == 0
-    assert "huggingface.co" in r.stdout
+    rec =  ast.literal_eval(r.stdout.strip())
+    assert rec["name"] == "bert-base-uncased"
+    assert rec["category"] == "MODEL"
