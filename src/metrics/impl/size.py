@@ -11,8 +11,9 @@ class SizeMetric:
     id = "size"
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
+        import time
+        start = time.time()
         c = context.get("size_components", {})
-        # Expect hardware compatibility scores in context
         hardware_keys = ["raspberry_pi", "jetson_nano", "desktop_pc", "aws_server"]
         size_score = {}
         for hw in hardware_keys:
@@ -20,4 +21,5 @@ class SizeMetric:
             size_score[hw] = float(c.get(hw, 0.0))
         # Optionally, compute an overall value as the mean
         value = sum(size_score.values()) / len(size_score) if size_score else 0.0
-        return MetricResult(self.id, value, details={"size_score": size_score}, binary=0, seconds=0.0)
+        seconds = time.time() - start
+        return MetricResult(self.id, value, details={"size_score": size_score}, binary=0, seconds=seconds)
