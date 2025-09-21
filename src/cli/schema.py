@@ -11,7 +11,7 @@ def default_ndjson(
     dataset_quality=None, dataset_quality_latency=None,
     code_quality=None, code_quality_latency=None
 ):
-    # If category is unknown, tests expect name=None
+    # Tests expect name=None when category is unknown
     if category is None:
         name = None
     else:
@@ -37,7 +37,7 @@ def default_ndjson(
 
     return {
         "name": name,
-        "category": category,  # may be None (allowed by tests)
+        "category": category,  # may be None or 'MODEL'/'DATASET'/'CODE'
         "net_score": score(net_score),
         "net_score_latency": latency(net_score_latency),
         "ramp_up_time": score(ramp_up_time),
