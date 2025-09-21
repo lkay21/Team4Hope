@@ -39,6 +39,11 @@ def handle_url(url: str) -> dict:
     ops = default_ops
     results, summary = run_metrics(ops, context=context)
 
+    # context = {"url": url}
+    # ops = default_ops
+
+    # results, summary = run_metrics(ops, context=context)
+
     category = get_url_category(url)
     ndjson_args = {}
     # Map MetricResult objects to NDJSON fields

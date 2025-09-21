@@ -1,25 +1,46 @@
-from __future__ import annotations
+"""
+Size metric implementation.
+
+[0, 1] range where 0 = very small model/dataset size and 1 = very large in size.
+This is computed by checking normalized size scores for different hardware
+targets (e.g., Raspberry Pi, Jetson Nano, Desktop PC, AWS server).
+
+See: Preliminary Design rubric (ECE30861) for justification.
+"""
+
+import time
 from typing import Dict, Any
-from ..types import MetricResult
+from src.metrics.types import MetricResult
+
 
 class SizeMetric:
     """
-    Combines normalized components: lines_of_code, db_size_mb, num_params_m, num_artifacts.
-    Provide any subset; missing values are ignored.
-    Output value is 0..1; details expose components. Binarization handled upstream.
+    Computes the size metric based on normalized size scores across hardware.
     """
     id = "size"
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
-        import time
         start = time.time()
         c = context.get("size_components", {})
+
+        # Expected hardware-specific keys
         hardware_keys = ["raspberry_pi", "jetson_nano", "desktop_pc", "aws_server"]
+
         size_score = {}
         for hw in hardware_keys:
-            # Default to 0 if not provided
-            size_score[hw] = float(c.get(hw, 0.0))
-        # Optionally, compute an overall value as the mean
+            try:
+                size_score[hw] = float(c.get(hw, 0.0))  # default to 0 if missing
+            except (TypeError, ValueError):
+                size_score[hw] = 0.0
+
+        # Compute overall value as the mean of available hardware scores
         value = sum(size_score.values()) / len(size_score) if size_score else 0.0
+
         seconds = time.time() - start
-        return MetricResult(self.id, value, details={"size_score": size_score}, binary=0, seconds=seconds)
+        return MetricResult(
+            id=self.id,
+            value=value,
+            binary=1 if any(size_score.values()) else 0,
+            details={"size_score": size_score},
+            seconds=seconds,
+        )
