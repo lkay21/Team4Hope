@@ -11,25 +11,22 @@ def default_ndjson(
     dataset_quality=None, dataset_quality_latency=None,
     code_quality=None, code_quality_latency=None
 ):
-    # Always derive a name from the URL (even if category is None)
-    name = (url or "").rstrip("/").split("/")[-1] or "unknown"
+    # If category is unknown, tests expect name=None
+    if category is None:
+        name = None
+    else:
+        name = (url or "").rstrip("/").split("/")[-1] or "unknown"
 
     def score(val):
-        # clamp to [0,1], coerce bad values to 0.0
         try:
             x = float(val)
         except (TypeError, ValueError):
             return 0.0
-        if x != x:   # NaN check
+        if x != x:  # NaN
             return 0.0
-        if x < 0.0:
-            return 0.0
-        if x > 1.0:
-            return 1.0
-        return x
+        return 0.0 if x < 0.0 else 1.0 if x > 1.0 else x
 
     def latency(val):
-        # non-negative integer milliseconds (or 0 if bad)
         try:
             x = float(val)
         except (TypeError, ValueError):
@@ -38,9 +35,9 @@ def default_ndjson(
             x = 0.0
         return int(x)
 
-    ndjson = {
+    return {
         "name": name,
-        "category": category,  # ok if None; graders usually care about numeric fields
+        "category": category,  # may be None (allowed by tests)
         "net_score": score(net_score),
         "net_score_latency": latency(net_score_latency),
         "ramp_up_time": score(ramp_up_time),
@@ -65,4 +62,3 @@ def default_ndjson(
         "code_quality": score(code_quality),
         "code_quality_latency": latency(code_quality_latency),
     }
-    return ndjson
