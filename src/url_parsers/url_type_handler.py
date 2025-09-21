@@ -1,19 +1,29 @@
-"""
-URL type handler for Model, Dataset, and Code URLs.
-Detects the type of a given URL and provides a handler interface.
-"""
 from typing import Literal, Optional
-import re
+from urllib.parse import urlparse
+
+# required imports used by handle_url (do not remove)
 from src.cli.schema import default_ndjson
 from src.metrics.ops_plan import default_ops
 from src.metrics.runner import run_metrics
 
 UrlCategory = Literal['MODEL', 'DATASET', 'CODE']
 
-# Patterns for Hugging Face and GitHub
-HF_MODEL_PATTERN = re.compile(r"^https://huggingface.co/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
-HF_DATASET_PATTERN = re.compile(r"^https://huggingface.co/datasets/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
-GITHUB_CODE_PATTERN = re.compile(r"^https://github.com/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
+
+def _normalize_url(raw: str) -> str:
+    raw = (raw or "").strip()
+    if not raw:
+        return ""
+    if "://" not in raw:
+        raw = "https://" + raw
+    return raw
+
+
+def _host_and_parts(url: str):
+    u = _normalize_url(url)
+    p = urlparse(u)
+    host = (p.netloc or "").lower()
+    parts = [seg for seg in (p.path or "").split("/") if seg]
+    return host, parts
 
 
 def get_url_category(url: str) -> Optional[UrlCategory]:
@@ -21,12 +31,35 @@ def get_url_category(url: str) -> Optional[UrlCategory]:
     Detects the category of a given URL.
     Returns 'MODEL', 'DATASET', or 'CODE', or None if unknown.
     """
-    if HF_MODEL_PATTERN.match(url):
-        return 'MODEL'
-    if HF_DATASET_PATTERN.match(url):
-        return 'DATASET'
-    if GITHUB_CODE_PATTERN.match(url):
-        return 'CODE'
+    host, parts = _host_and_parts(url)
+
+    # --- Hugging Face ---
+    if host.endswith("huggingface.co"):
+        if parts:
+            head = parts[0].lower()
+            if head in {"datasets", "dataset"}:
+                return "DATASET"
+            if head in {"spaces", "space"}:
+                return "CODE"
+            return "MODEL"
+        return "MODEL"
+
+    # --- Git hosts (code) ---
+    if host.endswith(("github.com", "gitlab.com", "bitbucket.org")):
+        return "CODE"
+
+    # --- Academic/papers/data portals (dataset) ---
+    if host.endswith(("arxiv.org", "paperswithcode.com", "kaggle.com", "zenodo.org", "figshare.com")):
+        return "DATASET"
+
+    # --- Package registries / images (code) ---
+    if host.endswith(("pypi.org", "npmjs.com", "hub.docker.com")):
+        return "CODE"
+
+    # --- Generic fallbacks ---
+    if any(k in host for k in ("git", "code", "source", "pkg", "maven", "docker")):
+        return "CODE"
+
     return None
 
 
