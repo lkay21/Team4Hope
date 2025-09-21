@@ -11,7 +11,10 @@ class BusFactorMetric:
     id = "bus_factor"
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
+        import time
+        start = time.time()
         meta = context.get("repo_meta", {})
         top_pct = float(meta.get("top_contributor_pct", 1.0))  # 1.0 == single dev dominates
         value = max(0.0, min(1.0, 1.0 - top_pct))
-        return MetricResult(self.id, value, details={"top_contributor_pct": top_pct}, binary=0, seconds=0.0)
+        seconds = time.time() - start
+        return MetricResult(self.id, value, details={"top_contributor_pct": top_pct}, binary=0, seconds=seconds)
