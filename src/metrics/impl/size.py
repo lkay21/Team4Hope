@@ -17,6 +17,7 @@ class SizeMetric:
     """
     Computes the size metric based on normalized size components.
     """
+    id = "size"   # <-- required so registry can register this metric
 
     def compute(self, context: dict) -> MetricResult:
         # Extract size components from context
