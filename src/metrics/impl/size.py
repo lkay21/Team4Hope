@@ -1,21 +1,45 @@
-from __future__ import annotations
-from typing import Dict, Any
-from ..types import MetricResult
+# src/metrics/impl/size.py
+"""
+Size metric implementation.
+
+[0, 1] range where 0 = very small model/dataset size and 1 = very large in size.
+This is computed by averaging the provided normalized size components.
+Components can include: lines of code, database size, number of parameters,
+and number of artifacts/files in the repo.
+
+See: Preliminary Design rubric (ECE30861) for justification.
+"""
+
+from src.metrics.types import MetricResult
+
 
 class SizeMetric:
     """
-    Combines normalized components: lines_of_code, db_size_mb, num_params_m, num_artifacts.
-    Provide any subset; missing values are ignored.
-    Output value is 0..1; details expose components. Binarization handled upstream.
+    Computes the size metric based on normalized size components.
     """
-    id = "size"
 
-    def compute(self, context: Dict[str, Any]) -> MetricResult:
-        c = context.get("size_components", {})
-        parts = []
-        # Each input should already be normalized to 0..1 by your parser; if raw, do your own min/max.
-        for key in ("loc_norm", "db_norm", "params_norm", "artifacts_norm"):
-            if key in c:
-                parts.append(float(c[key]))
-        value = sum(parts)/len(parts) if parts else 0.0
-        return MetricResult(self.id, value, details={"used": parts}, binary=0, seconds=0.0)
+    def compute(self, context: dict) -> MetricResult:
+        # Extract size components from context
+        size_components = context.get("size_components", {})
+
+        # Convert all values to floats, ignore invalid entries
+        used = []
+        values = []
+        for key, val in size_components.items():
+            try:
+                fval = float(val)
+                values.append(fval)
+                used.append(key)
+            except (TypeError, ValueError):
+                continue
+
+        # Compute average if we have values, else 0.0
+        value = sum(values) / len(values) if values else 0.0
+
+        return MetricResult(
+            id="size",
+            value=value,
+            binary=1 if values else 0,
+            details={"used": used},
+            seconds=0.0,
+        )
