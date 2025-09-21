@@ -7,13 +7,36 @@ def default_ndjson(url, category=None, net_score=None, net_score_latency=None, r
     else:
         name = None
 
-    ndjson = { 
-        "name": name, "category": category, "net_score": net_score, "net_score_latency": net_score_latency, "ramp_up_time": ramp_up_time,
-        "ramp_up_time_latency": ramp_up_time_latency, "bus_factor": bus_factor, "bus_factor_latency": bus_factor_latency,"performance_claims": performance_claims,
-        "performance_claims_latency": performance_claims_latency, "license": license, "license_latency": license_latency,
-        "size_score": {"raspberry_pi": raspberry_pi, "jetson_nano": jetson_nano, "desktop_pc": desktop_pc, "aws_server": aws_server},
-        "size_score_latency": size_score_latency, "dataset_and_code_score": dataset_and_code_score, "dataset_and_code_score_latency": dataset_and_code_score_latency,
-        "dataset_quality": dataset_quality, "dataset_quality_latency": dataset_quality_latency, "code_quality": code_quality, "code_quality_latency": code_quality_latency
+    def score(val):
+        return float(val) if val is not None else 0.0
+    def latency(val):
+        return int(val) if val is not None else 0
+
+    ndjson = {
+        "name": name,
+        "category": category,
+        "net_score": score(net_score),
+        "net_score_latency": latency(net_score_latency),
+        "ramp_up_time": score(ramp_up_time),
+        "ramp_up_time_latency": latency(ramp_up_time_latency),
+        "bus_factor": score(bus_factor),
+        "bus_factor_latency": latency(bus_factor_latency),
+        "performance_claims": score(performance_claims),
+        "performance_claims_latency": latency(performance_claims_latency),
+        "license": score(license),
+        "license_latency": latency(license_latency),
+        "size_score": {
+            "raspberry_pi": score(raspberry_pi),
+            "jetson_nano": score(jetson_nano),
+            "desktop_pc": score(desktop_pc),
+            "aws_server": score(aws_server)
+        },
+        "size_score_latency": latency(size_score_latency),
+        "dataset_and_code_score": score(dataset_and_code_score),
+        "dataset_and_code_score_latency": latency(dataset_and_code_score_latency),
+        "dataset_quality": score(dataset_quality),
+        "dataset_quality_latency": latency(dataset_quality_latency),
+        "code_quality": score(code_quality),
+        "code_quality_latency": latency(code_quality_latency)
     }
-    
     return ndjson
