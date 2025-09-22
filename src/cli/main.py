@@ -218,8 +218,6 @@ def main() -> int:
                         models[i] = links
 
 
-            print(models)
-
             ndjsons = evaluate_url(models)
 
             for ndjson in ndjsons.values():
