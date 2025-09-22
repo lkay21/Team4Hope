@@ -31,6 +31,7 @@ def get_url_category(models: dict) -> dict:
             categories.append(None)
 
     # WILL IT EVER NOT BE A MODEL???
+    # Change this function to be seeing what links are missing for further handling downstream
    
 
         # if model[2] and HF_MODEL_PATTERN.match(model['url']):
