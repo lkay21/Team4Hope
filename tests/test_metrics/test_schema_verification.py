@@ -49,23 +49,10 @@ def test_metric_protocol_contract():
 # -----------------------------
 
 def test_evaluate_url_structure():
-    url = "https://huggingface.co/someuser/somemodel"
-    rec = evaluate_url(url)
-
+    models = {0: ['https://github.com/google-research/bert', ' https://huggingface.co/datasets/bookcorpus/bookcorpus', ' https://huggingface.co/google-bert/bert-base-uncased\n'], 1: ['', '', 'https://huggingface.co/parvk11/audience_classifier_model\n'], 2: ['', '', 'https://huggingface.co/openai/whisper-tiny/tree/main']}
+    
+    rec = evaluate_url(models)
     assert isinstance(rec, dict)
-
-    # # Check top-level keys
-    # assert "url" in rec
-    # assert "out" in rec
-
-    # Check URL is preserved
-    # assert rec["url"] == url
-
-    # No longer need for new schema
-    # Check score fields exist with score + latency
-    # for field, metric in rec["scores"].items():
-    #     assert "score" in metric
-    #     assert "latency" in metric
 
 
 def test_validate_ndjson_valid_record():

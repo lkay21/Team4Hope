@@ -217,6 +217,9 @@ def main() -> int:
                         links = [link for link in line.split(',')]
                         models[i] = links
 
+
+            print(models)
+
             ndjsons = evaluate_url(models)
 
             for ndjson in ndjsons.values():
