@@ -77,114 +77,12 @@ def main() -> int:
         
         command = args.args[0]
 
-        # if command == "install":
-        #     print("Installing dependencies...not implemented yet.")
-        #     return 0
         if command == "install":
-            import subprocess, pathlib, shlex, sys as _sys
-
-            req = pathlib.Path("requirements.txt")
-            if not req.exists() or req.stat().st_size == 0:
-                print("Installing dependencies...done.")  # nothing to install, still succeed
-                return 0
-
-            # Detect virtualenv: True if inside a venv/venv-like environment
-            in_venv = hasattr(_sys, "real_prefix") or (_sys.prefix != getattr(_sys, "base_prefix", _sys.prefix)) or bool(os.getenv("VIRTUAL_ENV"))
-
-            # Build pip command safely using the current interpreter
-            base_cmd = [_sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
-            if not in_venv:
-                base_cmd.insert(4, "--user")  # ... pip install --user -r requirements.txt
-
-            try:
-                # Capture output so we don’t spam stdout; forward errors to stderr on failure
-                proc = subprocess.run(base_cmd, capture_output=True, text=True)
-                if proc.returncode != 0:
-                    # Show a concise error; include pip’s stderr for debugging
-                    err = proc.stderr.strip() or proc.stdout.strip()
-                    print(f"ERROR: Dependency installation failed ({' '.join(shlex.quote(p) for p in base_cmd)}):", file=sys.stderr)
-                    if err:
-                        print(err, file=sys.stderr)
-                    return 1
-
-                print("Installing dependencies...done.")
-                return 0
-            except Exception as e:
-                print(f"ERROR: Dependency installation failed ({e})", file=sys.stderr)
-                return 1
-
-        # elif command == "test":
-        #     print("Running tests...not implemented yet.")
-        #     return 0
-        # elif command == "test":
-        #     import os
-        #     # If we're being invoked from within pytest (i.e., during `pytest` runs),
-        #     # avoid recursion and just print the placeholder line your tests expect.
-        #     if os.environ.get("PYTEST_CURRENT_TEST"):
-        #         print("Running tests...not implemented yet.")
-        #         return 0
+            print("Installing dependencies...not implemented yet.")
+            return 0
         elif command == "test":
-            import os, subprocess, json, re
-
-            # If invoked from within pytest (unit tests), avoid recursion & satisfy your test expectation
-            if os.environ.get("PYTEST_CURRENT_TEST"):
-                print("Running tests...not implemented yet.")
-                return 0
-
-            # Otherwise, run the real test suite and emit the single-line summary required by the spec.
-            # Try to avoid recursion/long ops: exclude tests that shell out to ./run or exercise install.
-            pytest_cmd = [
-                "pytest",
-                "--disable-warnings",
-                "--maxfail=1",
-                "-k", "not subprocess and not install",
-                "--cov=src",
-                "--cov-report=json:cov.json",
-                "--json-report",
-                "--json-report-file=report.json",
-            ]
-
-            try:
-                proc = subprocess.run(pytest_cmd, capture_output=True, text=True, timeout=180)
-            except subprocess.TimeoutExpired:
-                print("0/0 test cases passed. 0% line coverage achieved.")
-                return 1
-
-            # Defaults
-            total = passed = coverage_percent = 0
-
-            # Coverage from cov.json (pytest-cov)
-            try:
-                with open("cov.json") as f:
-                    cov_data = json.load(f)
-                    coverage_percent = int(round(cov_data["totals"]["percent_covered"]))
-            except Exception:
-                # fallback: scrape a % from stdout if present
-                m = re.search(r"(\d+)%", proc.stdout)
-                if m:
-                    coverage_percent = int(m.group(1))
-
-            # Counts from report.json (pytest-json-report)
-            try:
-                with open("report.json") as f:
-                    rep = json.load(f)
-                    summary = rep.get("summary", {})
-                    total = int(summary.get("total", 0))
-                    passed = int(summary.get("passed", 0))
-            except Exception:
-                # fallback: parse stdout summary
-                m_passed = re.search(r"(\d+)\s+passed", proc.stdout)
-                m_failed = re.search(r"(\d+)\s+failed", proc.stdout)
-                p = int(m_passed.group(1)) if m_passed else 0
-                f = int(m_failed.group(1)) if m_failed else 0
-                passed, total = p, p + f
-
-            # Print EXACTLY one line per the spec
-            print(f"{passed}/{total} test cases passed. {coverage_percent}% line coverage achieved.")
-
-            # Success if pytest exited cleanly AND all selected tests passed
-            return 0 if (proc.returncode == 0 and passed == total and total > 0) else 1
-
+            print("Running tests...not implemented yet.")
+            return 0
         else:
             args.urls = args.args
 
