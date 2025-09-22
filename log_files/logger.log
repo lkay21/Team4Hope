@@ -1,2 +1,4 @@
 2025-09-21 17:44:11,806 [INFO] test_console_info: info message
 2025-09-21 17:44:11,806 [WARNING] test_console_info: warning message
+2025-09-21 20:45:40,443 [INFO] test_console_info: info message
+2025-09-21 20:45:40,443 [WARNING] test_console_info: warning message
