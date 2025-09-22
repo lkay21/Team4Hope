@@ -6,6 +6,17 @@ from typing import Any, Dict
 from src.url_parsers import handle_url, get_url_category
 from src.cli.schema import default_ndjson
 
+def _warn_invalid_github_token() -> None:
+    """Warn to stderr (only) if GITHUB_TOKEN clearly isn't a real token."""
+    tok = os.getenv("GITHUB_TOKEN")
+    if not tok:
+        return
+    # Real GitHub tokens commonly start with ghp_ or github_pat_
+    looks_valid = tok.startswith("ghp_") or tok.startswith("github_pat_")
+    if not looks_valid:
+        print("WARNING: Invalid GitHub token; continuing unauthenticated.", file=sys.stderr)
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="CLI for trustworthy model re-use")
     p.add_argument("args", nargs="*", help="Commands(install, test) or URLs to evaluate (HF model/dataset or GitHub repo)")
@@ -74,6 +85,8 @@ def main() -> int:
         if not args.args:
             print("No command or URLs provided", file=sys.stderr)
             return 1
+        
+        _warn_invalid_github_token()
         
         command = args.args[0]
 
