@@ -1,2 +1,14 @@
 2025-09-21 17:44:11,806 [INFO] test_console_info: info message
 2025-09-21 17:44:11,806 [WARNING] test_console_info: warning message
+2025-09-21 19:58:28,618 [INFO] test_console_info: info message
+2025-09-21 19:58:28,618 [WARNING] test_console_info: warning message
+2025-09-21 20:04:08,331 [INFO] test_console_info: info message
+2025-09-21 20:04:08,332 [WARNING] test_console_info: warning message
+2025-09-21 20:13:01,382 [INFO] test_console_info: info message
+2025-09-21 20:13:01,382 [WARNING] test_console_info: warning message
+2025-09-21 20:14:34,508 [INFO] test_console_info: info message
+2025-09-21 20:14:34,508 [WARNING] test_console_info: warning message
+2025-09-21 20:28:10,423 [INFO] test_console_info: info message
+2025-09-21 20:28:10,423 [WARNING] test_console_info: warning message
+2025-09-21 20:29:36,196 [INFO] test_console_info: info message
+2025-09-21 20:29:36,197 [WARNING] test_console_info: warning message
