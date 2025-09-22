@@ -77,9 +77,46 @@ def main() -> int:
         
         command = args.args[0]
 
+        # if command == "install":
+        #     print("Installing dependencies...not implemented yet.")
+        #     return 0
         if command == "install":
-            print("Installing dependencies...not implemented yet.")
-            return 0
+           import subprocess, pathlib, shlex, sys as _sys
+
+
+           req = pathlib.Path("requirements.txt")
+           if not req.exists() or req.stat().st_size == 0:
+               print("Installing dependencies...done.")  # nothing to install, still succeed
+               return 0
+
+
+           # Detect virtualenv: True if inside a venv/venv-like environment
+           in_venv = hasattr(_sys, "real_prefix") or (_sys.prefix != getattr(_sys, "base_prefix", _sys.prefix)) or bool(os.getenv("VIRTUAL_ENV"))
+
+
+           # Build pip command safely using the current interpreter
+           base_cmd = [_sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
+           if not in_venv:
+               base_cmd.insert(4, "--user")  # ... pip install --user -r requirements.txt
+
+
+           try:
+               # Capture output so we don’t spam stdout; forward errors to stderr on failure
+               proc = subprocess.run(base_cmd, capture_output=True, text=True)
+               if proc.returncode != 0:
+                   # Show a concise error; include pip’s stderr for debugging
+                   err = proc.stderr.strip() or proc.stdout.strip()
+                   print(f"ERROR: Dependency installation failed ({' '.join(shlex.quote(p) for p in base_cmd)}):", file=sys.stderr)
+                   if err:
+                       print(err, file=sys.stderr)
+                   return 1
+
+
+               print("Installing dependencies...done.")
+               return 0
+           except Exception as e:
+               print(f"ERROR: Dependency installation failed ({e})", file=sys.stderr)
+               return 1
         elif command == "test":
             print("Running tests...not implemented yet.")
             return 0
