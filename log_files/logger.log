@@ -6,3 +6,5 @@
 2025-09-21 20:48:32,435 [WARNING] test_console_info: warning message
 2025-09-21 20:48:42,291 [INFO] test_console_info: info message
 2025-09-21 20:48:42,292 [WARNING] test_console_info: warning message
+2025-09-21 20:55:34,362 [INFO] test_console_info: info message
+2025-09-21 20:55:34,362 [WARNING] test_console_info: warning message
