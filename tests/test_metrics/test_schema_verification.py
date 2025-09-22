@@ -50,15 +50,15 @@ def test_metric_protocol_contract():
 
 def test_evaluate_url_structure():
     models = {0: ['https://github.com/google-research/bert', ' https://huggingface.co/datasets/bookcorpus/bookcorpus', ' https://huggingface.co/google-bert/bert-base-uncased\n'], 1: ['', '', 'https://huggingface.co/parvk11/audience_classifier_model\n'], 2: ['', '', 'https://huggingface.co/openai/whisper-tiny/tree/main']}
-    
-    rec = evaluate_url(models)
-    assert isinstance(rec, dict)
+    ndjsons = evaluate_url(models)
+    assert isinstance(ndjsons, dict)
 
 
 def test_validate_ndjson_valid_record():
-    url = "https://huggingface.co/someuser/somemodel"
-    rec = evaluate_url(url)
-    assert validate_ndjson(rec) is True
+    models = {0: ['https://github.com/google-research/bert', ' https://huggingface.co/datasets/bookcorpus/bookcorpus', ' https://huggingface.co/google-bert/bert-base-uncased\n'], 1: ['', '', 'https://huggingface.co/parvk11/audience_classifier_model\n'], 2: ['', '', 'https://huggingface.co/openai/whisper-tiny/tree/main']}
+    ndsjons = evaluate_url(models)
+    for ndjson in ndsjons.values():
+        assert validate_ndjson(ndjson) is True
 
 
 def test_validate_ndjson_invalid_record_missing_field():
@@ -67,14 +67,16 @@ def test_validate_ndjson_invalid_record_missing_field():
 
 
 def test_validate_ndjson_invalid_score_type():
-    url = "https://huggingface.co/someuser/somemodel"
-    rec = evaluate_url(url)
-    rec["size_score"]["raspberry_pi"] = "not-a-number"  # invalid type
-    assert validate_ndjson(rec) is False
+    models = {0: ['https://github.com/google-research/bert', ' https://huggingface.co/datasets/bookcorpus/bookcorpus', ' https://huggingface.co/google-bert/bert-base-uncased\n'], 1: ['', '', 'https://huggingface.co/parvk11/audience_classifier_model\n'], 2: ['', '', 'https://huggingface.co/openai/whisper-tiny/tree/main']}
+    ndsjons = evaluate_url(models)
+    for ndjson in ndsjons.values():
+        ndjson["size_score"]["raspberry_pi"] = "not-a-number"  # invalid type
+        assert validate_ndjson(ndjson) is False
 
 
 def test_validate_ndjson_invalid_latency_type():
-    url = "https://huggingface.co/someuser/somemodel"
-    rec = evaluate_url(url)
-    rec["size_score_latency"] = "fast"  # invalid type
-    assert validate_ndjson(rec) is False
+    models = {0: ['https://github.com/google-research/bert', ' https://huggingface.co/datasets/bookcorpus/bookcorpus', ' https://huggingface.co/google-bert/bert-base-uncased\n'], 1: ['', '', 'https://huggingface.co/parvk11/audience_classifier_model\n'], 2: ['', '', 'https://huggingface.co/openai/whisper-tiny/tree/main']}
+    ndsjons = evaluate_url(models)
+    for ndjson in ndsjons.values():
+        ndjson["size_score_latency"] = "fast"  # invalid type
+        assert validate_ndjson(ndjson) is False
