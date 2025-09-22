@@ -6,33 +6,18 @@ from typing import Any, Dict
 from src.url_parsers import handle_url, get_url_category
 from src.cli.schema import default_ndjson
 
-# def _warn_invalid_github_token() -> None:
-#     """Warn to stderr (only) if GITHUB_TOKEN clearly isn't a real token."""
-#     tok = os.getenv("GITHUB_TOKEN")
-#     if not tok:
-#         return
-#     # Real GitHub tokens commonly start with ghp_ or github_pat_
-#     looks_valid = tok.startswith("ghp_") or tok.startswith("github_pat_")
-#     if not looks_valid:
-#         print("WARNING: Invalid GitHub token; continuing unauthenticated.", file=sys.stderr)
-
 def _warn_invalid_github_token_once() -> None:
-    """
-    Warn exactly once, to stderr only, if GITHUB_TOKEN is clearly invalid.
-    """
-    # Prevent double-prints if this is called more than once
+    """Warn exactly once, to stderr only, if GITHUB_TOKEN looks invalid."""
     if os.environ.get("_BAD_GH_TOKEN_WARNED") == "1":
         return
-
-    tok = os.getenv("GITHUB_TOKEN")
-    if tok:
-        # Real tokens commonly start with ghp_ or github_pat_
-        looks_valid = tok.startswith("ghp_") or tok.startswith("github_pat_")
-        if not looks_valid:
-            print("WARNING: Invalid GitHub token; continuing unauthenticated.", file=sys.stderr)
     os.environ["_BAD_GH_TOKEN_WARNED"] = "1"
 
-
+    tok = os.getenv("GITHUB_TOKEN")
+    if not tok:
+        return
+    looks_valid = tok.startswith("ghp_") or tok.startswith("github_pat_")
+    if not looks_valid:
+        sys.stderr.write("WARNING: Invalid GitHub token; continuing unauthenticated.\n")
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="CLI for trustworthy model re-use")
