@@ -33,7 +33,6 @@ def build_registry_from_plan() -> MetricRegistry:
     return reg
 
 
-# internal helper for both sequential & parallel paths
 def _compute_one(op: Operationalization, metric, ctx: Dict[str, Any]) -> Tuple[str, MetricResult]:
     # time just the metric compute
     def thunk():
@@ -62,13 +61,7 @@ def run_metrics(
 ) -> Tuple[Dict[str, MetricResult], Dict[str, Any]]:
     """
     Execute all metrics and return (results_by_id, netscore_summary).
-
-    Args:
-        ops: operationalizations (which metrics, weights, normalization)
-        context: shared read-only context for metrics
-        registry: optional pre-built registry
-        parallel: if True, run metrics concurrently via ThreadPoolExecutor
-        max_workers: optional cap on threads; default is a sensible value
+    Now supports code_url, dataset_url, and model_url in context.
     """
     reg = registry or build_registry_from_plan()
 
@@ -78,25 +71,60 @@ def run_metrics(
 
     results: Dict[str, MetricResult] = {}
 
+    def get_default_metric_result(metric_id: str) -> MetricResult:
+        # You may want to customize this per metric type
+        return MetricResult(
+            id=metric_id,
+            value=0.0,
+            binary=0,
+            details={},
+            seconds=0
+        )
+
+    def should_use_code_url(metric_id: str) -> bool:
+        return metric_id.startswith("code_")
+
+    def should_use_dataset_url(metric_id: str) -> bool:
+        return metric_id.startswith("dataset_")
+
+    def should_use_both(metric_id: str) -> bool:
+        return metric_id.startswith("code_dataset_") or metric_id.startswith("dataset_code_")
+
+    def compute_metric(op, metric, ctx):
+        metric_id = op.metric_id
+        # Decide which URL(s) to use
+        code_url = ctx.get("code_url", "")
+        dataset_url = ctx.get("dataset_url", "")
+        model_url = ctx.get("model_url", "")
+
+        # If metric needs code_url and it's blank, return default
+        if should_use_code_url(metric_id) and not code_url:
+            return metric_id, get_default_metric_result(metric_id)
+        # If metric needs dataset_url and it's blank, return default
+        if should_use_dataset_url(metric_id) and not dataset_url:
+            return metric_id, get_default_metric_result(metric_id)
+        # If metric needs both and either is blank, return default
+        if should_use_both(metric_id) and (not code_url or not dataset_url):
+            return metric_id, get_default_metric_result(metric_id)
+
+        # Otherwise, compute as normal
+        return _compute_one(op, metric, ctx)
+
     if not parallel:
-        # ---- original sequential path ----
         for op in ops:
             metric = reg.get(op.metric_id)
-            mid, res = _compute_one(op, metric, ctx)
+            mid, res = compute_metric(op, metric, ctx)
             results[mid] = res
     else:
-        # ---- parallel path ----
-        # sensible default: more threads than cores (metrics are usually I/O/light CPU)
         if max_workers is None:
             max_workers = min(32, (os.cpu_count() or 4) * 5)
-
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
             futures = {
-                ex.submit(_compute_one, op, reg.get(op.metric_id), ctx): op.metric_id
+                ex.submit(compute_metric, op, reg.get(op.metric_id), ctx): op.metric_id
                 for op in ops
             }
             for fut in as_completed(futures):
-                mid, res = fut.result()  # will raise if metric threw; you can wrap in try/except if desired
+                mid, res = fut.result()
                 results[mid] = res
 
     summary = netscore(results, ops)

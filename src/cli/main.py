@@ -28,16 +28,16 @@ def parse_args() -> argparse.Namespace:
 
     return p.parse_args()
 
-def evaluate_url(u: str) -> Dict[str, Any]:
+def evaluate_url(models: dict) -> Dict[str, Any]:
     # TODO: dispatch to url_parsers and metrics, check URL type
     # For now, return a dummy record
     # Return the required fields incl. overall score and subscores
-    empty_metrics = default_ndjson(u)
+    # empty_metrics = []
+    # for model in models:
+    #     empty_metrics.append(default_ndjson(model=model))
 
-    if get_url_category(u) is None:
-        return empty_metrics
-    else:
-        return handle_url(u)
+    if not None in get_url_category(models):
+        return handle_url(models)
 
 def validate_ndjson(record: Dict[str, Any]) -> bool:
     string_fields = {"name", "category"}
@@ -205,16 +205,27 @@ def main() -> int:
         #    # Success if pytest exited cleanly AND all selected tests passed
         #    return 0 if (proc.returncode == 0 and passed == total and total > 0) else 1
         else:
-            args.urls = args.args
 
-            for u in args.urls:
-                rec = evaluate_url(u)
+            # Each model has a dictionary of links in order {code, dataset, model}
+            models = {}
+            
 
-                if validate_ndjson(rec):
-                    print(json.dumps(rec))
+            if os.path.isfile(command):
+                with open(command, 'r') as f:
+                    lines = f.readlines()
+                    for i, line in enumerate(lines):
+                        links = [link for link in line.split(',')]
+                        models[i] = links
+
+            ndjsons = evaluate_url(models)
+
+            for ndjson in ndjsons.values():
+                if validate_ndjson(ndjson):
+                    print(json.dumps(ndjson))
                 else:
-                    name = u.rstrip('/').split('/')[-1]
+                    name = ndjson.get("name", "unknown")
                     print(json.dumps({"name": name, "error": "Invalid record"}))
+
             return 0
         
     except Exception as e:
