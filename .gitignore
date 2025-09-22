@@ -9,3 +9,5 @@ log_files/
 log_files/*.log
 .coverage
 log_files/*.log
+.coverage
+log_files/*.log
