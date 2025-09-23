@@ -132,78 +132,31 @@ def main() -> int:
            except Exception as e:
                print(f"ERROR: Dependency installation failed ({e})", file=sys.stderr)
                return 1
+           
         elif command == "test":
-            print("Running tests...not implemented yet.")
-            return 0
-        # elif command == "test":
-        #    import os, subprocess, json, re
+            import subprocess
+            import re
+
+            result = subprocess.run(
+                [sys.executable, "-m", "pytest", "--cov", "--tb=short"],
+                capture_output=True,
+                text=True
+            )
+            output = result.stdout
+            error = result.stderr
 
 
-        #    # If invoked from within pytest (unit tests), avoid recursion & satisfy your test expectation
-        #    if os.environ.get("PYTEST_CURRENT_TEST"):
-        #        print("Running tests...not implemented yet.")
-        #        return 0
+            passed_match = re.search(r"=+ (\d+) passed.*?in [\d\.]+s =+", output)
+            total_match = re.search(r"collected (\d+) items", output)
+            cov_match = re.search(r"(\d+)%\s+coverage", output) or re.search(r"TOTAL.*?(\d+)%", output)
 
+            passed = int(passed_match.group(1)) if passed_match else 0
+            total = int(total_match.group(1)) if total_match else 0
+            coverage = int(cov_match.group(1)) if cov_match else 0
 
-        #    # Otherwise, run the real test suite and emit the single-line summary required by the spec.
-        #    # Try to avoid recursion/long ops: exclude tests that shell out to ./run or exercise install.
-        #    pytest_cmd = [
-        #        "pytest",
-        #        "--disable-warnings",
-        #        "--maxfail=1",
-        #        "-k", "not subprocess and not install",
-        #        "--cov=src",
-        #        "--cov-report=json:cov.json",
-        #        "--json-report",
-        #        "--json-report-file=report.json",
-        #    ]
-
-
-        #    try:
-        #        proc = subprocess.run(pytest_cmd, capture_output=True, text=True, timeout=180)
-        #    except subprocess.TimeoutExpired:
-        #        print("0/0 test cases passed. 0% line coverage achieved.")
-        #        return 1
-
-
-        #    # Defaults
-        #    total = passed = coverage_percent = 0
-
-
-        #    # Coverage from cov.json (pytest-cov)
-        #    try:
-        #        with open("cov.json") as f:
-        #            cov_data = json.load(f)
-        #            coverage_percent = int(round(cov_data["totals"]["percent_covered"]))
-        #    except Exception:
-        #        # fallback: scrape a % from stdout if present
-        #        m = re.search(r"(\d+)%", proc.stdout)
-        #        if m:
-        #            coverage_percent = int(m.group(1))
-
-
-        #    # Counts from report.json (pytest-json-report)
-        #    try:
-        #        with open("report.json") as f:
-        #            rep = json.load(f)
-        #            summary = rep.get("summary", {})
-        #            total = int(summary.get("total", 0))
-        #            passed = int(summary.get("passed", 0))
-        #    except Exception:
-        #        # fallback: parse stdout summary
-        #        m_passed = re.search(r"(\d+)\s+passed", proc.stdout)
-        #        m_failed = re.search(r"(\d+)\s+failed", proc.stdout)
-        #        p = int(m_passed.group(1)) if m_passed else 0
-        #        f = int(m_failed.group(1)) if m_failed else 0
-        #        passed, total = p, p + f
-
-
-        #    # Print EXACTLY one line per the spec
-        #    print(f"{passed}/{total} test cases passed. {coverage_percent}% line coverage achieved.")
-
-
-        #    # Success if pytest exited cleanly AND all selected tests passed
-        #    return 0 if (proc.returncode == 0 and passed == total and total > 0) else 1
+            print(f"{passed}/{total} test cases passed. {coverage}% line coverage achieved.")
+            
+            return result.returncode
         else:
 
             # Each model has a dictionary of links in order {code, dataset, model}
