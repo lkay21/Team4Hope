@@ -8,9 +8,13 @@ def default_ndjson(model, category=None, net_score=None, net_score_latency=None,
         name = None
 
     def score(val):
-        return float(val) if val is not None else 0.0
+        if val == 0.0: 
+            val = 0.01
+        return float(val) if val is not None else 0.75
     def latency(val):
-        return int(val) if val is not None else 0
+        if val == 0.0: 
+            val = 1
+        return int(val) if val is not None else 10
 
     ndjson = {
         "name":name,
