@@ -222,7 +222,7 @@ def main() -> int:
 
             for ndjson in ndjsons.values():
                 if validate_ndjson(ndjson):
-                    print(json.dumps(ndjson))
+                    print(json.dumps(ndjson, separators=(",", ":")))
                 else:
                     name = ndjson.get("name", "unknown")
                     print(json.dumps({"name": name, "error": "Invalid record"}))
