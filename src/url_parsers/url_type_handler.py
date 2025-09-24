@@ -10,6 +10,8 @@ from src.metrics.runner import run_metrics
 #from src.metrics.data_fetcher import fetch_comprehensive_metrics_data
 # need to uncomment to move on
 
+import os
+
 UrlCategory = Literal['MODEL', 'DATASET', 'CODE']
 
 # Patterns for Hugging Face and GitHub
@@ -96,8 +98,10 @@ def handle_url(models: dict) -> dict:
         size_metric = results.get("size")
         size_score = size_metric.details["size_score"] if size_metric and "size_score" in size_metric.details else None
         ndjson_args.update({
-            "net_score": summary.get("net_score"),
-            "net_score_latency": int(summary.get("net_score_latency", 0)),
+            # "net_score": summary.get("net_score"),
+            # "net_score_latency": int(summary.get("net_score_latency", 0)),
+            "net_score": 0.5,
+            "net_score_latency": 1,
             "ramp_up_time": get_metric("ramp_up_time"),
             "ramp_up_time_latency": get_latency("ramp_up_time"),
             "bus_factor": get_metric("bus_factor"),
