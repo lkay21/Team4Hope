@@ -34,17 +34,18 @@ def get_code_url_from_genai(model_url: str) -> Optional[str]:
         "messages": [
             {
                 "role": "user",
-                "content": "What is your name?"
+                "content": f"Given the model URL {model_url}, what is the corresponding code repository URL? Only provide the URL."
             }
         ],
     }
     response = requests.post(PURDUE_GENAI_URL, headers=headers, json=body)
     if response.status_code == 200:
-        print(response.text)
+        data = response.json()
+        new_code_url = data["choices"][0]["message"]["content"].strip()
     else:
         raise Exception(f"Error: {response.status_code}, {response.text}")
 
-    return None  # Placeholder return
+    return new_code_url
     
 def get_dataset_url_from_genai(model_url: str) -> Optional[str]:
     headers = {
@@ -56,17 +57,18 @@ def get_dataset_url_from_genai(model_url: str) -> Optional[str]:
         "messages": [
             {
                 "role": "user",
-                "content": "What is your name?"
+                "content": f"Given the model URL {model_url}, what is the corresponding dataset URL? Only provide the URL."
             }
         ],
     }
     response = requests.post(PURDUE_GENAI_URL, headers=headers, json=body)
     if response.status_code == 200:
-        print(response.text)
+        data = response.json()
+        new_dataset_url = data["choices"][0]["message"]["content"].strip()
     else:
         raise Exception(f"Error: {response.status_code}, {response.text}")
 
-    return None
+    return new_dataset_url
 
 def get_url_category(models: dict) -> dict:
     categories = []
@@ -81,6 +83,7 @@ def get_url_category(models: dict) -> dict:
             # Handling for only the dataset and code...Not Sure if this is needed (Phase 2?)
             categories.append(None)
 
+        #Might see if we can pull from HF Model API and parse readme for relvant URLs Before using GenAI?
         if links[0] in (None, ''):
             links[0] = get_code_url_from_genai(links[2])
         if links[1] in (None, ''):
@@ -89,28 +92,17 @@ def get_url_category(models: dict) -> dict:
     return categories
 
         
-
-
-
-
-
-
-
 def handle_url(models: dict) -> dict:
     """
     Returns a dictionary with the detected category and name for the URL.
     Computes all metrics and maps them to the NDJSON schema.
     """
-    # context = {"url": url}
-    # ops = default_ops
-    # results, summary = run_metrics(ops, context=context)
-
-    # context = {"url": url}
-    # ops = default_ops
 
     # results, summary = run_metrics(ops, context=context)
+
+    # Gets Categories for ALL inputs and fills in missing code/dataset URLs using GenAI
     categories = get_url_category(models)
-    print(models)
+
 
     ndjsons = {}
 
@@ -173,6 +165,6 @@ def handle_url(models: dict) -> dict:
             "code_quality_latency": get_latency("code_quality"),
         })
 
-        ndjsons[i] = default_ndjson(model=model_url, category='MODEL', **ndjson_args)
+        ndjsons[i] = default_ndjson(model=model_url, category=categories[i], **ndjson_args)
 
     return ndjsons  
