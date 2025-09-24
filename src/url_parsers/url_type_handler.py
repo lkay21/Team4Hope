@@ -7,6 +7,7 @@ import re
 from src.cli.schema import default_ndjson
 from src.metrics.ops_plan import default_ops
 from src.metrics.runner import run_metrics
+from src.metrics.data_fetcher import fetch_comprehensive_metrics_data
 
 UrlCategory = Literal['MODEL', 'DATASET', 'CODE']
 
@@ -66,7 +67,17 @@ def handle_url(models: dict) -> dict:
 
     for i, links in models.items():
         code_url, dataset_url, model_url = links[0], links[1], links[2]
-        context = {"code_url": code_url, "dataset_url": dataset_url, "model_url": model_url}
+        
+        # Fetch comprehensive data for all metrics
+        comprehensive_data = fetch_comprehensive_metrics_data(code_url, dataset_url, model_url)
+        
+        # Use the comprehensive data as context
+        context = {
+            "code_url": code_url, 
+            "dataset_url": dataset_url, 
+            "model_url": model_url,
+            **comprehensive_data  # Merge all the fetched data
+        }
         ops = default_ops
         results, summary = run_metrics(ops, context=context)
 
