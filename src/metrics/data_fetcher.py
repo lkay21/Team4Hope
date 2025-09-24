@@ -3,7 +3,7 @@ data_fetcher.py
 Comprehensive data fetcher for metrics computation.
 Fetches metadata from Hugging Face, GitHub, and other sources.
 """
-
+"""
 import requests
 import time
 import re
@@ -16,7 +16,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def safe_request(url: str, timeout: int = 10, **kwargs) -> Optional[requests.Response]:
-    """Make a safe HTTP request with error handling."""
+    #Make a safe HTTP request with error handling.
     try:
         response = requests.get(url, timeout=timeout, **kwargs)
         response.raise_for_status()
@@ -26,7 +26,7 @@ def safe_request(url: str, timeout: int = 10, **kwargs) -> Optional[requests.Res
         return None
 
 def extract_repo_info(github_url: str) -> tuple:
-    """Extract owner and repo name from GitHub URL."""
+    #Extract owner and repo name from GitHub URL.
     try:
         # Handle various GitHub URL formats
         if "github.com" not in github_url:
@@ -41,7 +41,7 @@ def extract_repo_info(github_url: str) -> tuple:
     return None, None
 
 def extract_hf_model_id(hf_url: str) -> Optional[str]:
-    """Extract model ID from Hugging Face URL."""
+    #Extract model ID from Hugging Face URL.
     try:
         if "huggingface.co" not in hf_url:
             return None
@@ -59,7 +59,7 @@ def extract_hf_model_id(hf_url: str) -> Optional[str]:
     return None
 
 def check_availability(code_url: str, dataset_url: str, model_url: str) -> Dict[str, Any]:
-    """Check if URLs are accessible and valid."""
+    #Check if URLs are accessible and valid.
     results = {
         "has_code": False,
         "has_dataset": False,
@@ -92,7 +92,7 @@ def check_availability(code_url: str, dataset_url: str, model_url: str) -> Dict[
     return results
 
 def get_huggingface_model_data(model_url: str) -> Dict[str, Any]:
-    """Fetch Hugging Face model metadata."""
+    #Fetch Hugging Face model metadata.
     try:
         from huggingface_hub import model_info, HfApi
         
@@ -140,7 +140,7 @@ def get_huggingface_model_data(model_url: str) -> Dict[str, Any]:
         return {}
 
 def get_huggingface_dataset_data(dataset_url: str) -> Dict[str, Any]:
-    """Fetch Hugging Face dataset metadata."""
+    #Fetch Hugging Face dataset metadata.
     try:
         from huggingface_hub import dataset_info
         from datasets import load_dataset_builder
@@ -180,7 +180,7 @@ def get_huggingface_dataset_data(dataset_url: str) -> Dict[str, Any]:
         return {}
 
 def get_github_repo_data(code_url: str) -> Dict[str, Any]:
-    """Fetch GitHub repository metadata."""
+    #Fetch GitHub repository metadata.
     owner, repo = extract_repo_info(code_url)
     if not owner or not repo:
         return {}
@@ -260,7 +260,7 @@ def get_github_repo_data(code_url: str) -> Dict[str, Any]:
     return data
 
 def analyze_code_quality(files: List[str]) -> Dict[str, float]:
-    """Analyze code quality metrics from file list."""
+    #Analyze code quality metrics from file list.
     if not files:
         return {
             "test_coverage_norm": 0.0,
@@ -291,7 +291,7 @@ def analyze_code_quality(files: List[str]) -> Dict[str, float]:
     }
 
 def normalize_downloads(downloads: int) -> float:
-    """Normalize download count to 0-1 scale."""
+    #Normalize download count to 0-1 scale.
     if downloads <= 0:
         return 0.0
     elif downloads >= 1000000:  # 1M+ downloads = 1.0
@@ -302,7 +302,7 @@ def normalize_downloads(downloads: int) -> float:
         return min(1.0, math.log10(downloads) / 6.0)  # log10(1M) = 6
 
 def normalize_stars(stars: int) -> float:
-    """Normalize GitHub stars to 0-1 scale."""
+    #Normalize GitHub stars to 0-1 scale.
     if stars <= 0:
         return 0.0
     elif stars >= 10000:  # 10k+ stars = 1.0
@@ -312,7 +312,7 @@ def normalize_stars(stars: int) -> float:
         return min(1.0, math.log10(stars) / 4.0)  # log10(10k) = 4
 
 def compute_size_scores(total_size_bytes: int) -> Dict[str, float]:
-    """Compute hardware-specific size scores."""
+    #Compute hardware-specific size scores.
     if total_size_bytes <= 0:
         return {
             "raspberry_pi": 0.01,
@@ -345,7 +345,7 @@ def compute_size_scores(total_size_bytes: int) -> Dict[str, float]:
     }
 
 def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url: str) -> Dict[str, Any]:
-    """
+    
     Fetch all necessary data for metrics computation from various sources.
     
     Args:
@@ -355,7 +355,7 @@ def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url:
         
     Returns:
         Dictionary containing all metric computation data
-    """
+    
     
     data = {
         "availability": {},
@@ -499,3 +499,4 @@ def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url:
             "requirements_total": 1,
             "compatible_licenses": ["mit", "apache-2.0", "bsd-3-clause", "bsd", "mpl-2.0"]
         }
+"""
