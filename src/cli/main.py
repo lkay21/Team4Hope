@@ -84,8 +84,6 @@ def validate_ndjson(record: Dict[str, Any]) -> bool:
 def main() -> int:
     args = parse_args()
     try:
-        _warn_invalid_github_token_once()
-
         if not args.args:
             print("No command or URLs provided", file=sys.stderr)
             return 1
