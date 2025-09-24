@@ -83,8 +83,8 @@ def handle_url(models: dict) -> dict:
         size_metric = results.get("size")
         size_score = size_metric.details["size_score"] if size_metric and "size_score" in size_metric.details else None
         ndjson_args.update({
-            "net_score": summary.get("net_score"),
-            "net_score_latency": int(summary.get("net_score_latency", 0)),
+            "netscore": summary.get("netscore"),
+            "netscore_latency": int(summary.get("netscore_latency", 0)),
             "ramp_up_time": get_metric("ramp_up_time"),
             "ramp_up_time_latency": get_latency("ramp_up_time"),
             "bus_factor": get_metric("bus_factor"),
