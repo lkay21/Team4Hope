@@ -10,3 +10,4 @@ pip install -r requirements.txt
 - Tests: pytest (aim for ≥20 tests, ≥80% coverage)
 - Output: stdout (supports --ndjson)
 - Logging: use LOG_VERBOSITY, LOG_PATH
+<!-- ci: trigger autograder -->
