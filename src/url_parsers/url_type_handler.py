@@ -7,7 +7,7 @@ import re
 from src.cli.schema import default_ndjson
 from src.metrics.ops_plan import default_ops
 from src.metrics.runner import run_metrics
-from src.metrics.data_fetcher import fetch_comprehensive_metrics_data
+#from src.metrics.data_fetcher import fetch_comprehensive_metrics_data
 
 UrlCategory = Literal['MODEL', 'DATASET', 'CODE']
 
