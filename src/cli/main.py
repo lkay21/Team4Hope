@@ -1,32 +1,27 @@
+# src/cli/main.py
 import argparse
 import json
 import os
 import sys
 from math import isfinite
 from typing import Any, Dict
-
 from src.url_parsers import handle_url, get_url_category
-from src.cli.schema import default_ndjson  # kept for compatibility
+from src.cli.schema import default_ndjson
 from src.logger import get_logger
 
-
 def _warn_invalid_github_token_once() -> None:
-    """
-    If GITHUB_TOKEN looks invalid, warn exactly once to stderr (no stdout),
-    then ignore it (treat as unauthenticated).
-    """
+    """Warn exactly once, to **stderr only**, if GITHUB_TOKEN looks invalid."""
     if os.environ.get("_BAD_GH_TOKEN_WARNED") == "1":
         return
-    os.environ["_BAD_GH_TOKEN_WARNED"] = "1"
-
-    tok = os.getenv("GITHUB_TOKEN")
+    tok = os.environ.get("GITHUB_TOKEN")
     if not tok:
         return
     looks_valid = tok.startswith("ghp_") or tok.startswith("github_pat_")
     if not looks_valid:
-        # Print only to stderr (grader expects this), then unset for safety.
         sys.stderr.write("WARNING: Invalid GitHub token; continuing unauthenticated.\n")
-        os.environ.pop("GITHUB_TOKEN", None)
+        os.environ["_BAD_GH_TOKEN_WARNED"] = "1"
+        # Do NOT print to stdout. Do NOT print twice. Do NOT exit.
+
 
 
 def parse_args() -> argparse.Namespace:
