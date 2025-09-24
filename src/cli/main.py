@@ -18,7 +18,7 @@ def _check_env_variables() -> None:
 
     if log_file:
         try:
-            lf = open(log_file, "a")
+            lf = open(log_file, "r+")
             sys.stderr = lf
         except OSError:
             sys.exit(1)
