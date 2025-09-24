@@ -8,6 +8,7 @@ from src.cli.schema import default_ndjson
 from src.metrics.ops_plan import default_ops
 from src.metrics.runner import run_metrics
 #from src.metrics.data_fetcher import fetch_comprehensive_metrics_data
+# need to uncomment to move on
 
 UrlCategory = Literal['MODEL', 'DATASET', 'CODE']
 
@@ -67,8 +68,9 @@ def handle_url(models: dict) -> dict:
 
     for i, links in models.items():
         code_url, dataset_url, model_url = links[0], links[1], links[2]
-        context = {"code_url": code_url, "dataset_url": dataset_url, "model_url": model_url}
+        context = {"code_url": code_url, "dataset_url": dataset_url, "model_url": model_url} # need to delete to move on
         # Fetch comprehensive data for all metrics
+        # need to uncomment to move on 74-82
         #comprehensive_data = fetch_comprehensive_metrics_data(code_url, dataset_url, model_url)
         
         # Use the comprehensive data as context
