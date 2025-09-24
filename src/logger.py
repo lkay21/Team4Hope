@@ -1,7 +1,9 @@
+# src/logger.py
 import logging
 import os
 import sys
 from pathlib import Path
+from typing import Optional  # 3.9-friendly Optional[...] instead of PEP 604 unions
 
 def _usable(p: Path) -> bool:
     """Return True if we can create parent dirs and open the file for append."""
@@ -20,7 +22,9 @@ def _pick_log_path() -> Path:
       2) LOG_FILE_PATH   (autograder may set this)
       3) LOG_PATH        (alternate name some graders use)
       4) ./log_files/app.log
-    If LOG_FILE_PATH/LOG_PATH is present but empty or unusable, print a warning to stderr and fall back.
+
+    If LOG_FILE_PATH/LOG_PATH is present but empty or unusable,
+    print a warning to **stderr only** and fall back to default.
     """
     env_legacy = os.environ.get("LOG_FILE")              # tests
     env_primary_raw = os.environ.get("LOG_FILE_PATH")    # grader (variant 1)
@@ -38,19 +42,19 @@ def _pick_log_path() -> Path:
         if _usable(p):
             return p
 
-    # Helper to try a candidate var and warn if unusable
-    def _check(raw_val: str | None) -> Path | None:
+    # Helper to try a candidate var and warn if unusable (3.9-safe annotations)
+    def _check(raw_val: Optional[str]) -> Optional[Path]:
         present = raw_val is not None
         val = (raw_val or "").strip()
         if present:
             if val:
-                p = Path(val).expanduser()
+                p2 = Path(val).expanduser()
                 try:
-                    p = p.resolve()
+                    p2 = p2.resolve()
                 except Exception:
-                    p = Path(val).expanduser()
-                if _usable(p):
-                    return p
+                    p2 = Path(val).expanduser()
+                if _usable(p2):
+                    return p2
             # present but empty or unusable -> WARN to stderr only
             sys.stderr.write("Invalid LOG_FILE_PATH; using default ./log_files/app.log\n")
         return None
