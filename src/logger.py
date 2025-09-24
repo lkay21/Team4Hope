@@ -9,9 +9,9 @@ def get_logger(name: str = "team4hope") -> logging.Logger:
         # Already configured
         return logger
 
-    log_level_env = int(os.getenv("LOG_LEVEL", "0"))
+    log_level_env = int(os.getenv("LOG_VERBOSITY", "0"))
 
-    log_file = os.getenv("LOG_FILE", "log_files/logger.log")
+    log_file = os.getenv("LOG_PATH", "log_files/logger.log")
     if log_file and os.path.dirname(log_file):
         os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
