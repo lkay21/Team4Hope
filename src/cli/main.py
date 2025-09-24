@@ -6,8 +6,6 @@ from typing import Any, Dict
 from src.url_parsers import handle_url, get_url_category
 from src.cli.schema import default_ndjson
 
-github_token = os.environ.get("GITHUB_TOKEN")
-log_path = os.environ.get("LOG_PATH")
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="CLI for trustworthy model re-use")
