@@ -6,6 +6,8 @@ from typing import Any, Dict
 from src.url_parsers import handle_url, get_url_category
 from src.cli.schema import default_ndjson
 
+github_token = os.environ.get("GITHUB_TOKEN")
+log_path = os.environ.get("LOG_PATH")
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="CLI for trustworthy model re-use")
@@ -72,6 +74,8 @@ def validate_ndjson(record: Dict[str, Any]) -> bool:
 def main() -> int:
     args = parse_args()
     try:
+        _warn_invalid_github_token_once()
+        
         if not args.args:
             print("No command or URLs provided", file=sys.stderr)
             return 1
