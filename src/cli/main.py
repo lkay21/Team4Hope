@@ -10,18 +10,21 @@ def _check_env_variables() -> None:
     tok = os.getenv("GITHUB_TOKEN")
     log_file = os.getenv("LOG_FILE")
     log_level = os.getenv("LOG_LEVEL")
-    if(log_level is None):
+
+    # Per spec: default verbosity is 0 if not set
+    verbosity = int(log_level) if log_level is not None else 0
+    if verbosity < 0 or verbosity > 2:
         sys.exit(1)
-    else:
-        verbosity = int(log_level)
-        if verbosity < 0 or verbosity > 2:
-            sys.exit(1)
+
     if log_file:
         try:
-            os.makedirs(os.path.dirname(log_file), exist_ok=True)
-            log_file = open(log_file, "a")
-            sys.stderr = log_file
-        except Exception as e:
+            dirpath = os.path.dirname(log_file)
+            if dirpath:  # only create if there is a directory component
+                os.makedirs(dirpath, exist_ok=True)
+            # Try opening; let OSError indicate invalid/unwritable path
+            lf = open(log_file, "a")
+            sys.stderr = lf
+        except OSError:
             sys.exit(1)
     if not tok:
         sys.exit(1)
