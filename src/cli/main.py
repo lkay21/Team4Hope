@@ -5,8 +5,6 @@ import sys
 from typing import Any, Dict
 from src.url_parsers import handle_url, get_url_category
 from src.cli.schema import default_ndjson
-import logging
-from pathlib import Path
 
 def _warn_invalid_github_token_once() -> None:
     """Warn exactly once, to stderr only, if GITHUB_TOKEN looks invalid."""
@@ -16,33 +14,10 @@ def _warn_invalid_github_token_once() -> None:
 
     tok = os.getenv("GITHUB_TOKEN")
     if not tok:
-        sys.stderr.write("WARNING: Invalid GitHub token; continuing unauthenticated.\n")
         return
-    
     looks_valid = tok.startswith("ghp_") or tok.startswith("github_pat_")
     if not looks_valid:
         sys.stderr.write("WARNING: Invalid GitHub token; continuing unauthenticated.\n")
-        os.environ["GITHUB_TOKEN"] = ""  # Clear invalid token
-
-def _setup_logging(verbosity: int) -> None:
-    """Setup logging based on LOG_FILE env var and verbosity"""
-    log_path = os.getenv("LOG_FILE")
-    handlers = []
-    
-    if log_path:
-        try:
-            # Ensure parent directory exists
-            Path(log_path).parent.mkdir(parents=True, exist_ok=True)
-            handlers.append(logging.FileHandler(log_path))
-        except (OSError, PermissionError):
-            sys.stderr.write(f"WARNING: Cannot write to log file {log_path}\n")
-
-    # Configure logging
-    logging.basicConfig(
-        level=logging.DEBUG if verbosity > 0 else logging.WARNING,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=handlers
-    )
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="CLI for trustworthy model re-use")
@@ -109,7 +84,6 @@ def validate_ndjson(record: Dict[str, Any]) -> bool:
 def main() -> int:
     args = parse_args()
     try:
-        _setup_logging(args.verbosity)
         _warn_invalid_github_token_once()
 
         if not args.args:

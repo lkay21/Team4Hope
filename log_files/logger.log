@@ -16,9 +16,3 @@
 2025-09-23 15:44:01,969 [WARNING] test_console_info: warning message
 2025-09-23 15:47:21,872 [INFO] test_console_info: info message
 2025-09-23 15:47:21,872 [WARNING] test_console_info: warning message
-2025-09-23 19:40:42,534 [INFO] test_console_info: info message
-2025-09-23 19:40:42,535 [WARNING] test_console_info: warning message
-2025-09-23 20:11:05,580 [INFO] test_console_info: info message
-2025-09-23 20:11:05,580 [WARNING] test_console_info: warning message
-2025-09-23 20:11:15,256 [INFO] test_console_info: info message
-2025-09-23 20:11:15,256 [WARNING] test_console_info: warning message
