@@ -18,10 +18,6 @@ def _check_env_variables() -> None:
 
     if log_file:
         try:
-            dirpath = os.path.dirname(log_file)
-            if dirpath:  # only create if there is a directory component
-                os.makedirs(dirpath, exist_ok=True)
-            # Try opening; let OSError indicate invalid/unwritable path
             lf = open(log_file, "a")
             sys.stderr = lf
         except OSError:
