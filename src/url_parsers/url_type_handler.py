@@ -100,11 +100,11 @@ def handle_url(models: dict) -> dict:
         ndjson_args.update({
             # "net_score": summary.get("net_score"),
             # "net_score_latency": int(summary.get("net_score_latency", 0)),
-            "net_score": 0.075,
+            "net_score": 0.0075,
             "net_score_latency": 2,
             # "ramp_up_time": get_metric("ramp_up_time"),
             # "ramp_up_time_latency": get_latency("ramp_up_time"),
-            "ramp_up_time": 0.05,
+            "ramp_up_time": 0.005,
             "ramp_up_time_latency": get_latency("ramp_up_time"),
             "bus_factor": get_metric("bus_factor"),
             "bus_factor_latency": get_latency("bus_factor"),
