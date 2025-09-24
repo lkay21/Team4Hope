@@ -1,4 +1,4 @@
-def default_ndjson(model, category=None, net_score=None, net_score_latency=None, ramp_up_time=None, ramp_up_time_latency=None, bus_factor=None, bus_factor_latency=None,
+def default_ndjson(model, category=None, netscore=None, netscore_latency=None, ramp_up_time=None, ramp_up_time_latency=None, bus_factor=None, bus_factor_latency=None,
     performance_claims=None, performance_claims_latency=None, license=None, license_latency=None, raspberry_pi=None, jetson_nano=None, desktop_pc=None, aws_server=None, size_score_latency=None, dataset_and_code_score=None, dataset_and_code_score_latency=None,
     dataset_quality=None, dataset_quality_latency=None, code_quality=None,code_quality_latency=None):
     
@@ -19,8 +19,8 @@ def default_ndjson(model, category=None, net_score=None, net_score_latency=None,
     ndjson = {
         "name":name,
         "category":category,
-        "net_score":score(net_score),
-            "net_score_latency":latency(net_score_latency),
+        "netscore":score(netscore),
+            "netscore_latency":latency(netscore_latency),
             "ramp_up_time":score(ramp_up_time),
             "ramp_up_time_latency":latency(ramp_up_time_latency),
             "bus_factor":score(bus_factor),

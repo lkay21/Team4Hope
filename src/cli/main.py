@@ -41,9 +41,9 @@ def evaluate_url(models: dict) -> Dict[str, Any]:
 
 def validate_ndjson(record: Dict[str, Any]) -> bool:
     string_fields = {"name", "category"}
-    score_fields = {"net_score", "ramp_up_time", "bus_factor", "performance_claims", "license",
+    score_fields = {"netscore", "ramp_up_time", "bus_factor", "performance_claims", "license",
                     "size_score", "dataset_and_code_score", "dataset_quality", "code_quality"}
-    latency_fields = {"net_score_latency", "ramp_up_time_latency", "bus_factor_latency",
+    latency_fields = {"netscore_latency", "ramp_up_time_latency", "bus_factor_latency",
                       "performance_claims_latency", "license_latency", "size_score_latency",
                       "dataset_and_code_score_latency", "dataset_quality_latency", "code_quality_latency"}
     
