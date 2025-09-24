@@ -45,8 +45,9 @@ def evaluate_url(models: dict) -> Dict[str, Any]:
     # for model in models:
     #     empty_metrics.append(default_ndjson(model=model))
 
-    if not None in get_url_category(models):
-        return handle_url(models)
+    return handle_url(models)
+    # if not None in get_url_category(models):
+    #     return handle_url(models)
 
 def validate_ndjson(record: Dict[str, Any]) -> bool:
     string_fields = {"name", "category"}

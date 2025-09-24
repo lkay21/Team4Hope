@@ -4,6 +4,8 @@ Detects the type of a given URL and provides a handler interface.
 """
 from typing import Literal, Optional
 import re
+from wsgiref import headers
+import requests
 from src.cli.schema import default_ndjson
 from src.metrics.ops_plan import default_ops
 from src.metrics.runner import run_metrics
@@ -19,58 +21,96 @@ HF_MODEL_PATTERN = re.compile(r"^https://huggingface.co/[^/]+/[^/]+($|/tree/|/bl
 HF_DATASET_PATTERN = re.compile(r"^https://huggingface.co/datasets/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
 GITHUB_CODE_PATTERN = re.compile(r"^https://github.com/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
 
+PURDUE_GENAI_API_KEY = os.getenv("GEN_AI_STUDIO_API_KEY")
+PURDUE_GENAI_URL = "https://genai.rcac.purdue.edu/api/chat/completions"
+
+def get_code_url_from_genai(model_url: str) -> Optional[str]:
+    headers = {
+        "Authorization": f"Bearer {PURDUE_GENAI_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    body = {
+        "model": "llama3.1:latest",
+        "messages": [
+            {
+                "role": "user",
+                "content": f"Given the model URL {model_url}, what is the corresponding code repository URL? Only provide the URL."
+            }
+        ],
+    }
+    response = requests.post(PURDUE_GENAI_URL, headers=headers, json=body)
+    if response.status_code == 200:
+        data = response.json()
+        new_code_url = data["choices"][0]["message"]["content"].strip()
+    else:
+        raise Exception(f"Error: {response.status_code}, {response.text}")
+
+    return new_code_url
+    
+def get_dataset_url_from_genai(model_url: str) -> Optional[str]:
+    headers = {
+        "Authorization": f"Bearer {PURDUE_GENAI_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    body = {
+        "model": "llama3.1:latest",
+        "messages": [
+            {
+                "role": "user",
+                "content": f"Given the model URL {model_url}, what is the corresponding dataset URL? Only provide the URL."
+            }
+        ],
+    }
+    response = requests.post(PURDUE_GENAI_URL, headers=headers, json=body)
+    if response.status_code == 200:
+        data = response.json()
+        new_dataset_url = data["choices"][0]["message"]["content"].strip()
+    else:
+        raise Exception(f"Error: {response.status_code}, {response.text}")
+
+    return new_dataset_url
 
 def get_url_category(models: dict) -> dict:
-    """
-    Detects the category of a given URL.
-    Returns 'MODEL', 'DATASET', or 'CODE', or None if unknown.
-    """
     categories = []
 
     for model in models:
         links = models[model]
-        if len(links) > 2 and links[2]:
+
+        if len(links) > 2 and links[2] not in (None, ''):
+            # WILL IT EVER NOT BE A MODEL???
             categories.append('MODEL')
         else:
+            # Handling for only the dataset and code...Not Sure if this is needed (Phase 2?)
             categories.append(None)
 
-    # WILL IT EVER NOT BE A MODEL???
-    # Change this function to be seeing what links are missing for further handling downstream
-   
+        #Might see if we can pull from HF Model API and parse readme for relvant URLs Before using GenAI?
+        if links[0] in (None, ''):
+            links[0] = get_code_url_from_genai(links[2])
+        if links[1] in (None, ''):
+            links[1] = get_dataset_url_from_genai(links[2])
 
-        # if model[2] and HF_MODEL_PATTERN.match(model['url']):
-        #     categories.append('MODEL')
-        # else:
-        #     categories.append(None)
-
-        # if HF_MODEL_PATTERN.match(model['url']):
-        #     return 'MODEL'
-        # if HF_DATASET_PATTERN.match(model['url']):
-        #     return 'DATASET'
-        # if GITHUB_CODE_PATTERN.match(model['url']):
-        #     return 'CODE'
-        
     return categories
 
-
+        
 def handle_url(models: dict) -> dict:
     """
     Returns a dictionary with the detected category and name for the URL.
     Computes all metrics and maps them to the NDJSON schema.
     """
-    # context = {"url": url}
-    # ops = default_ops
-    # results, summary = run_metrics(ops, context=context)
-
-    # context = {"url": url}
-    # ops = default_ops
 
     # results, summary = run_metrics(ops, context=context)
+
+    # Gets Categories for ALL inputs and fills in missing code/dataset URLs using GenAI
+    categories = get_url_category(models)
+
+
     ndjsons = {}
 
     for i, links in models.items():
         code_url, dataset_url, model_url = links[0], links[1], links[2]
         context = {"code_url": code_url, "dataset_url": dataset_url, "model_url": model_url} # need to delete to move on
+
+
         # Fetch comprehensive data for all metrics
         # need to uncomment to move on 74-82
         #comprehensive_data = fetch_comprehensive_metrics_data(code_url, dataset_url, model_url)
@@ -125,6 +165,6 @@ def handle_url(models: dict) -> dict:
             "code_quality_latency": get_latency("code_quality"),
         })
 
-        ndjsons[i] = default_ndjson(model=model_url, category='MODEL', **ndjson_args)
+        ndjsons[i] = default_ndjson(model=model_url, category=categories[i], **ndjson_args)
 
     return ndjsons  
