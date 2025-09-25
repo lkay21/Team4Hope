@@ -19,14 +19,9 @@ def _check_env_variables() -> None:
 
     try:
         if verbosity == 0:
-            # Open and truncate only if file exists, do not create
             if os.path.exists(log_file):
                 lf = open(log_file, "r+")
-                lf.truncate(0)
                 sys.stderr = lf
-            else:
-                # File does not exist, do nothing
-                pass
         else:
             lf = open(log_file, "r+")
             sys.stderr = lf
