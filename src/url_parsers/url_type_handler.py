@@ -32,7 +32,8 @@ HF_MODEL_PATTERN = re.compile(r"^https://huggingface\.co/[^/]+/[^/]+($|/tree/|/b
 HF_DATASET_PATTERN = re.compile(r"^https://huggingface\.co/datasets/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
 GITHUB_CODE_PATTERN = re.compile(r"^https://github\.com/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
 GITLAB_CODE_PATTERN = re.compile(r"^https://gitlab\.com/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
-HF_SPACES_PATTERN = re.compile(r"^https://huggingface\.co/spaces/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/")
+HF_SPACES_PATTERN = re.compile(r"^https://huggingface\.co/spaces/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
+
 
 # Purdue GenAI Studio
 PURDUE_GENAI_API_KEY = os.getenv("GEN_AI_STUDIO_API_KEY")
