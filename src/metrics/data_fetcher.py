@@ -12,12 +12,10 @@ import math
 import os
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
-from src.logger import get_logger
 
 import requests
 
-logger = get_logger(__name__)
-
+logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------
 # Utilities
 # ---------------------------------------------------------------------
