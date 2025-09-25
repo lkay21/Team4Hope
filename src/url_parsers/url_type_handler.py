@@ -38,15 +38,36 @@ PURDUE_GENAI_URL = "https://genai.rcac.purdue.edu/api/chat/completions"
 # ---------- helpers ----------
 
 def _valid_code_url(url: Optional[str]) -> bool:
-    return bool(url and GITHUB_CODE_PATTERN.match(url))
+    if url and GITHUB_CODE_PATTERN.match(url):
+        return True
+    # Fallback: ask GenAI if this is a valid code repo URL
+    if url and PURDUE_GENAI_API_KEY:
+        prompt = f"Is the following URL a valid code repository? Reply 'yes' or 'no' only. URL: {url}"
+        result = _genai_single_url(prompt)
+        return bool(result and result.lower().startswith("yes"))
+    return False
 
 
 def _valid_dataset_url(url: Optional[str]) -> bool:
-    return bool(url and HF_DATASET_PATTERN.match(url))
+    if url and HF_DATASET_PATTERN.match(url):
+        return True
+    # Fallback: ask GenAI if this is a valid dataset URL
+    if url and PURDUE_GENAI_API_KEY:
+        prompt = f"Is the following URL a valid Hugging Face dataset? Reply 'yes' or 'no' only. URL: {url}"
+        result = _genai_single_url(prompt)
+        return bool(result and result.lower().startswith("yes"))
+    return False
 
 
 def _valid_model_url(url: Optional[str]) -> bool:
-    return bool(url and HF_MODEL_PATTERN.match(url))
+    if url and HF_MODEL_PATTERN.match(url):
+        return True
+    # Fallback: ask GenAI if this is a valid Hugging Face model URL
+    if url and PURDUE_GENAI_API_KEY:
+        prompt = f"Is the following URL a valid Hugging Face model? Reply 'yes' or 'no' only. URL: {url}"
+        result = _genai_single_url(prompt)
+        return bool(result and result.lower().startswith("yes"))
+    return False
 
 
 def _genai_single_url(prompt: str) -> Optional[str]:
