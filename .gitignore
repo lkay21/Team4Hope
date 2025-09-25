@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 .env
 team4hope.log
+*.log
 .coverage
 log_files/
 setup_github_tokens.sh
