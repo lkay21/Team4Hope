@@ -18,15 +18,24 @@ def _check_env_variables() -> None:
         sys.exit(1)
 
     try:
-        lf = open(log_file, "r+")
-        sys.stderr = lf
+        if verbosity == 0:
+            # Open and truncate only if file exists, do not create
+            if os.path.exists(log_file):
+                lf = open(log_file, "r+")
+                lf.truncate(0)
+                sys.stderr = lf
+            else:
+                # File does not exist, do nothing
+                pass
+        else:
+            lf = open(log_file, "r+")
+            sys.stderr = lf
+            if verbosity == 1:
+                logging.basicConfig(level=logging.WARNING, filename=log_file, filemode="r+")
+            elif verbosity == 2:
+                logging.basicConfig(level=logging.DEBUG, filename=log_file, filemode="r+")
     except OSError:
         sys.exit(1)
-        
-    if verbosity == 1:
-        logging.basicConfig(level=logging.WARNING, filename=log_file, filemode="r+")
-    elif verbosity == 2:
-        logging.basicConfig(level=logging.DEBUG, filename=log_file, filemode="r+")
 
     # GitHub token checks (your existing behavior)
     if not tok:
