@@ -12,10 +12,11 @@ import math
 import os
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
+from src.logger import get_logger
 
 import requests
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------
 # Utilities
@@ -28,7 +29,7 @@ def safe_request(url: str, timeout: int = 10, **kwargs) -> Optional[requests.Res
         resp.raise_for_status()
         return resp
     except Exception as e:
-        # logger.warning(f"Request failed for {url}: {e}")
+        logger.debug(f"Request failed for {url}: {e}")
         return None
 
 
@@ -137,7 +138,7 @@ def get_huggingface_model_data(model_url: str) -> Dict[str, Any]:
         data["total_size_bytes"] = total_size
         return data
     except Exception as e:
-        logger.warning(f"Failed to fetch HF model data: {e}")
+        logger.debug(f"Failed to fetch HF model data: {e}")
         return {}
 
 
@@ -171,7 +172,7 @@ def get_huggingface_dataset_data(dataset_url: str) -> Dict[str, Any]:
             data["features"], data["splits"], data["description"] = "", [], ""
         return data
     except Exception as e:
-        # logger.warning(f"Failed to fetch HF dataset data: {e}")
+        logger.debug(f"Failed to fetch HF dataset data: {e}")
         return {}
 
 # ---------------------------------------------------------------------
@@ -232,7 +233,7 @@ def get_github_repo_data(code_url: str) -> Dict[str, Any]:
                 data["files"] = [it["path"] for it in tree if it.get("type") == "blob"]
                 break
     except Exception as e:
-        logger.warning(f"Failed to fetch GitHub data: {e}")
+        logger.debug(f"Failed to fetch GitHub data: {e}")
 
     return data
 

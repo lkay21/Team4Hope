@@ -1,0 +1,22 @@
+2025-09-25 12:22:49,501 [INFO] src.metrics.data_fetcher: Fetching HF model data from  https://huggingface.co/google-bert/bert-base-uncased
+
+2025-09-25 12:22:51,075 [INFO] src.metrics.data_fetcher: Fetching HF dataset data from  https://huggingface.co/datasets/bookcorpus/bookcorpus
+2025-09-25 12:22:51,075 [DEBUG] src.metrics.data_fetcher: Failed to fetch HF dataset data: No module named 'datasets'
+2025-09-25 12:22:51,076 [INFO] src.metrics.data_fetcher: Fetching GitHub data from https://github.com/google-research/bert
+2025-09-25 12:22:51,887 [DEBUG] src.metrics.data_fetcher: Request failed for https://api.github.com/repos/google-research/bert/git/trees/main?recursive=1: 404 Client Error: Not Found for url: https://api.github.com/repos/google-research/bert/git/trees/main?recursive=1
+2025-09-25 12:22:52,132 [INFO] src.metrics.data_fetcher: Successfully fetched comprehensive metrics data
+2025-09-25 12:22:52,563 [INFO] src.metrics.data_fetcher: Fetching HF model data from https://huggingface.co/parvk11/audience_classifier_model
+
+2025-09-25 12:22:53,262 [INFO] src.metrics.data_fetcher: Fetching HF dataset data from https://huggingface.co/datasets/parvk11/audience-classification-dataset
+2025-09-25 12:22:53,262 [DEBUG] src.metrics.data_fetcher: Failed to fetch HF dataset data: No module named 'datasets'
+2025-09-25 12:22:53,262 [INFO] src.metrics.data_fetcher: Fetching GitHub data from https://github.com/parvk11/Audience-Classification-Model
+2025-09-25 12:22:53,398 [DEBUG] src.metrics.data_fetcher: Request failed for https://api.github.com/repos/parvk11/Audience-Classification-Model: 404 Client Error: Not Found for url: https://api.github.com/repos/parvk11/Audience-Classification-Model
+2025-09-25 12:22:53,529 [DEBUG] src.metrics.data_fetcher: Request failed for https://api.github.com/repos/parvk11/Audience-Classification-Model/contributors: 404 Client Error: Not Found for url: https://api.github.com/repos/parvk11/Audience-Classification-Model/contributors
+2025-09-25 12:22:53,684 [DEBUG] src.metrics.data_fetcher: Request failed for https://api.github.com/repos/parvk11/Audience-Classification-Model/git/trees/main?recursive=1: 404 Client Error: Not Found for url: https://api.github.com/repos/parvk11/Audience-Classification-Model/git/trees/main?recursive=1
+2025-09-25 12:22:53,821 [DEBUG] src.metrics.data_fetcher: Request failed for https://api.github.com/repos/parvk11/Audience-Classification-Model/git/trees/master?recursive=1: 404 Client Error: Not Found for url: https://api.github.com/repos/parvk11/Audience-Classification-Model/git/trees/master?recursive=1
+2025-09-25 12:22:53,821 [INFO] src.metrics.data_fetcher: Successfully fetched comprehensive metrics data
+2025-09-25 12:22:54,650 [INFO] src.metrics.data_fetcher: Fetching HF model data from https://huggingface.co/openai/whisper-tiny/tree/main
+2025-09-25 12:22:55,806 [INFO] src.metrics.data_fetcher: Fetching HF dataset data from https://huggingface.co/datasets/facebook/wav2vec2_large_librispeech_asr
+2025-09-25 12:22:55,806 [DEBUG] src.metrics.data_fetcher: Failed to fetch HF dataset data: No module named 'datasets'
+2025-09-25 12:22:55,806 [INFO] src.metrics.data_fetcher: Fetching GitHub data from https://github.com/openai/Whisper
+2025-09-25 12:22:56,587 [INFO] src.metrics.data_fetcher: Successfully fetched comprehensive metrics data
