@@ -5,7 +5,6 @@ import sys
 from typing import Any, Dict
 from src.url_parsers import handle_url, get_url_category
 from src.cli.schema import default_ndjson
-
 import logging
 
 def _check_env_variables() -> None:
@@ -23,6 +22,11 @@ def _check_env_variables() -> None:
         sys.stderr = lf
     except OSError:
         sys.exit(1)
+        
+    if verbosity == 1:
+        logging.basicConfig(level=logging.WARNING, filename=log_file, filemode="r+")
+    elif verbosity == 2:
+        logging.basicConfig(level=logging.DEBUG, filename=log_file, filemode="r+")
 
     # GitHub token checks (your existing behavior)
     if not tok:
