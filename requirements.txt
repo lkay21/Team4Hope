@@ -1,2 +1,5 @@
+requests
+huggingface_hub
+datasets
 pytest
 pytest-cov
