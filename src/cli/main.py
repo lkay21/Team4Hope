@@ -6,6 +6,8 @@ from typing import Any, Dict
 from src.url_parsers import handle_url, get_url_category
 from src.cli.schema import default_ndjson
 
+import logging
+
 def _check_env_variables() -> None:
     tok = os.getenv("GITHUB_TOKEN")
     log_file = os.getenv("LOG_FILE")
@@ -17,16 +19,58 @@ def _check_env_variables() -> None:
         sys.exit(1)
 
     if log_file:
-        try:
-            lf = open(log_file, "r+")
-            sys.stderr = lf
-        except OSError:
-            sys.exit(1)
+        if verbosity == 0:
+            # LOG_LEVEL=0 => create/truncate an empty file and DO NOT redirect stderr.
+            # Also disable Python logging so nothing writes.
+            try:
+                open(log_file, "w").close()   # blank file
+            except OSError:
+                sys.exit(1)
+            logging.disable(logging.CRITICAL)  # silence all logging
+        else:
+            # LOG_LEVEL>0 => redirect stderr to the log and enable logging to that file.
+            try:
+                lf = open(log_file, "a")
+                sys.stderr = lf
+            except OSError:
+                sys.exit(1)
+            # map levels: 1 => INFO, 2 => DEBUG
+            level = logging.INFO if verbosity == 1 else logging.DEBUG
+            logging.basicConfig(
+                filename=log_file,
+                level=level,
+                format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+            )
+
+    # GitHub token checks (your existing behavior)
     if not tok:
         sys.exit(1)
     looks_valid = tok.startswith("ghp_") or tok.startswith("github_pat_")
     if not looks_valid:
         sys.exit(1)
+
+
+# def _check_env_variables() -> None:
+#     tok = os.getenv("GITHUB_TOKEN")
+#     log_file = os.getenv("LOG_FILE")
+#     log_level = os.getenv("LOG_LEVEL")
+
+#     # Per spec: default verbosity is 0 if not set
+#     verbosity = int(log_level) if log_level is not None else 0
+#     if verbosity < 0 or verbosity > 2:
+#         sys.exit(1)
+
+#     if log_file:
+#         try:
+#             lf = open(log_file, "r+")
+#             sys.stderr = lf
+#         except OSError:
+#             sys.exit(1)
+#     if not tok:
+#         sys.exit(1)
+#     looks_valid = tok.startswith("ghp_") or tok.startswith("github_pat_")
+#     if not looks_valid:
+#         sys.exit(1)
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="CLI for trustworthy model re-use")
