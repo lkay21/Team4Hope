@@ -13,10 +13,7 @@ def get_logger(name: str = "team4hope") -> logging.Logger:
     log_file = os.getenv("LOG_FILE")
     
     if log_file and os.path.dirname(log_file):
-        try:
-            os.makedirs(os.path.dirname(log_file), exist_ok=True)
-        except Exception as e:
-            sys.exit(1)
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
     try:
         level = int(log_level_env)
@@ -30,7 +27,7 @@ def get_logger(name: str = "team4hope") -> logging.Logger:
     else:
         logger.setLevel(logging.DEBUG)
 
-    # logger.setLevel(level)
+    logger.setLevel(level)
 
     formatter = logging.Formatter(
         "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
@@ -39,7 +36,7 @@ def get_logger(name: str = "team4hope") -> logging.Logger:
     # Console handler
     # if level > 0:
     #     ch = logging.StreamHandler()
-    #     # ch.setLevel(logger.level)
+    #     ch.setLevel(logger.level)
     #     ch.setFormatter(formatter)
     #     logger.addHandler(ch)
 
@@ -50,6 +47,4 @@ def get_logger(name: str = "team4hope") -> logging.Logger:
         fh.setFormatter(formatter)
         logger.addHandler(fh)
     
-    logger.propagate = False
-
     return logger
