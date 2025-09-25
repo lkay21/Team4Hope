@@ -28,7 +28,7 @@ def safe_request(url: str, timeout: int = 10, **kwargs) -> Optional[requests.Res
         resp.raise_for_status()
         return resp
     except Exception as e:
-        logger.warning(f"Request failed for {url}: {e}")
+        # logger.warning(f"Request failed for {url}: {e}")
         return None
 
 
@@ -171,7 +171,7 @@ def get_huggingface_dataset_data(dataset_url: str) -> Dict[str, Any]:
             data["features"], data["splits"], data["description"] = "", [], ""
         return data
     except Exception as e:
-        logger.warning(f"Failed to fetch HF dataset data: {e}")
+        # logger.warning(f"Failed to fetch HF dataset data: {e}")
         return {}
 
 # ---------------------------------------------------------------------

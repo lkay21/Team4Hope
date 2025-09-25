@@ -34,12 +34,12 @@ def get_logger(name: str = "team4hope") -> logging.Logger:
     )
 
     # Console handler
-    if level > 0:
+    if level >= 0:
         ch = logging.StreamHandler()
         ch.setFormatter(formatter)
         logger.addHandler(ch)
 
-    if log_file and level > 0:
+    if log_file and level >= 0:
         fh = logging.FileHandler(log_file)
         fh.setFormatter(formatter)
         logger.addHandler(fh)
