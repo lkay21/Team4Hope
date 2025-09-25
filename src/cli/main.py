@@ -11,28 +11,17 @@ def _check_env_variables() -> None:
     tok = os.getenv("GITHUB_TOKEN")
     log_file = os.getenv("LOG_FILE")
     log_level = os.getenv("LOG_LEVEL")
-
     # Per spec: default verbosity is 0 if not set
     verbosity = int(log_level) if log_level is not None else 0
     if verbosity < 0 or verbosity > 2:
         sys.exit(1)
 
-    try:
-        if verbosity == 0:
-            if os.path.exists(log_file):
-                lf = open(log_file, "r+")
-                sys.stderr = lf
-        else:
+    if log_file:
+        try:
             lf = open(log_file, "r+")
             sys.stderr = lf
-            if verbosity == 1:
-                logging.basicConfig(level=logging.WARNING, filename=log_file, filemode="r+")
-            elif verbosity == 2:
-                logging.basicConfig(level=logging.DEBUG, filename=log_file, filemode="r+")
-    except OSError:
-        sys.exit(1)
-
-    # GitHub token checks (your existing behavior)
+        except OSError:
+            sys.exit(1)
     if not tok:
         sys.exit(1)
     looks_valid = tok.startswith("ghp_") or tok.startswith("github_pat_")
