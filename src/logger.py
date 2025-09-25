@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 def get_logger(name: str = "team4hope") -> logging.Logger:
     """Configure and return a logger that respects env variables."""
@@ -12,7 +13,10 @@ def get_logger(name: str = "team4hope") -> logging.Logger:
     log_file = os.getenv("LOG_FILE")
     
     if log_file and os.path.dirname(log_file):
-        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        try:
+            os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        except Exception as e:
+            sys.exit(1)
 
     try:
         level = int(log_level_env)
