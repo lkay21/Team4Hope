@@ -1,150 +1,180 @@
 """
 URL type handler for Model, Dataset, and Code URLs.
-Detects the type of a given URL and provides a handler interface.
+Detects URL category, fills missing links using Purdue GenAI Studio,
+fetches metric context, runs metrics, and returns NDJSON objects.
+
+Phase-1 constraints:
+- Only Purdue GenAI Studio for LLM calls (GEN_AI_STUDIO_API_KEY)
+- At least one metric must use HF API (done in data_fetcher)
+- Typed Python throughout
 """
-from typing import Literal, Optional
+from __future__ import annotations
+
+from typing import Dict, List, Literal, Optional
+import logging
+import os
 import re
-from wsgiref import headers
+
 import requests
+
 from src.cli.schema import default_ndjson
 from src.metrics.ops_plan import default_ops
 from src.metrics.runner import run_metrics
-#from src.metrics.data_fetcher import fetch_comprehensive_metrics_data
-# need to uncomment to move on
+from src.metrics.data_fetcher import fetch_comprehensive_metrics_data
 
-import os
+logger = logging.getLogger(__name__)
 
-UrlCategory = Literal['MODEL', 'DATASET', 'CODE']
+UrlCategory = Literal["MODEL", "DATASET", "CODE"]
 
-# Patterns for Hugging Face and GitHub
-HF_MODEL_PATTERN = re.compile(r"^https://huggingface.co/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
-HF_DATASET_PATTERN = re.compile(r"^https://huggingface.co/datasets/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
-GITHUB_CODE_PATTERN = re.compile(r"^https://github.com/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
+# URL patterns
+HF_MODEL_PATTERN = re.compile(r"^https://huggingface\.co/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
+HF_DATASET_PATTERN = re.compile(r"^https://huggingface\.co/datasets/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
+GITHUB_CODE_PATTERN = re.compile(r"^https://github\.com/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
 
+# Purdue GenAI Studio
 PURDUE_GENAI_API_KEY = os.getenv("GEN_AI_STUDIO_API_KEY")
 PURDUE_GENAI_URL = "https://genai.rcac.purdue.edu/api/chat/completions"
 
+# ---------- helpers ----------
+
+def _valid_code_url(url: Optional[str]) -> bool:
+    return bool(url and GITHUB_CODE_PATTERN.match(url))
+
+
+def _valid_dataset_url(url: Optional[str]) -> bool:
+    return bool(url and HF_DATASET_PATTERN.match(url))
+
+
+def _valid_model_url(url: Optional[str]) -> bool:
+    return bool(url and HF_MODEL_PATTERN.match(url))
+
+
+def _genai_single_url(prompt: str) -> Optional[str]:
+    """
+    Call Purdue GenAI Studio with a constrained prompt that should return a single URL.
+    Returns None on any error or if not configured. Satisfies the Phase-1 LLM usage.
+    """
+    if not PURDUE_GENAI_API_KEY:
+        logger.info("GEN_AI_STUDIO_API_KEY not set; skipping GenAI enrichment.")
+        return None
+    try:
+        headers = {
+            "Authorization": f"Bearer {PURDUE_GENAI_API_KEY}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "model": "llama3.1:latest",
+            "messages": [
+                {"role": "system", "content": "Reply with exactly one URL and nothing else."},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": 0,
+        }
+        resp = requests.post(PURDUE_GENAI_URL, headers=headers, json=body, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        text: str = data["choices"][0]["message"]["content"].strip()
+        m = re.search(r"https?://\S+", text)
+        return m.group(0) if m else None
+    except Exception as e:
+        logger.warning(f"GenAI call failed: {e}")
+        return None
+
+
 def get_code_url_from_genai(model_url: str) -> Optional[str]:
-    headers = {
-        "Authorization": f"Bearer {PURDUE_GENAI_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    body = {
-        "model": "llama3.1:latest",
-        "messages": [
-            {
-                "role": "user",
-                "content": f"Given the model URL {model_url}, what is the corresponding code repository URL? Only provide the URL."
-            }
-        ],
-    }
-    response = requests.post(PURDUE_GENAI_URL, headers=headers, json=body)
-    if response.status_code == 200:
-        data = response.json()
-        new_code_url = data["choices"][0]["message"]["content"].strip()
-    else:
-        raise Exception(f"Error: {response.status_code}, {response.text}")
+    url = _genai_single_url(
+        f"Given the model URL {model_url}, what is the corresponding code repository URL? Only provide the URL."
+    )
+    return url if _valid_code_url(url) else None
 
-    return new_code_url
-    
+
 def get_dataset_url_from_genai(model_url: str) -> Optional[str]:
-    headers = {
-        "Authorization": f"Bearer {PURDUE_GENAI_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    body = {
-        "model": "llama3.1:latest",
-        "messages": [
-            {
-                "role": "user",
-                "content": f"Given the model URL {model_url}, what is the corresponding dataset URL? Only provide the URL."
-            }
-        ],
-    }
-    response = requests.post(PURDUE_GENAI_URL, headers=headers, json=body)
-    if response.status_code == 200:
-        data = response.json()
-        new_dataset_url = data["choices"][0]["message"]["content"].strip()
-    else:
-        raise Exception(f"Error: {response.status_code}, {response.text}")
+    url = _genai_single_url(
+        f"Given the model URL {model_url}, what is the corresponding dataset URL? Only provide the URL."
+    )
+    return url if _valid_dataset_url(url) else None
 
-    return new_dataset_url
 
-def get_url_category(models: dict) -> dict:
-    categories = []
+def get_url_category(models: Dict[str, List[Optional[str]]]) -> Dict[str, Optional[UrlCategory]]:
+    """
+    Classify each entry and opportunistically fill missing links via GenAI.
 
-    for model in models:
-        links = models[model]
+    `models` maps an arbitrary key -> [code_url, dataset_url, model_url].
+    Returns a dict with the same keys mapping to the inferred UrlCategory.
+    """
+    categories: Dict[str, Optional[UrlCategory]] = {}
+    for key, links in models.items():
+        # normalize to a mutable list of length 3
+        if links is None:
+            links = [None, None, None]
+            models[key] = links
+        elif len(links) < 3:
+            links += [None] * (3 - len(links))
 
-        if len(links) > 2 and links[2] not in (None, ''):
-            # WILL IT EVER NOT BE A MODEL???
-            categories.append('MODEL')
-        else:
-            # Handling for only the dataset and code...Not Sure if this is needed (Phase 2?)
-            categories.append(None)
+        code_url, dataset_url, model_url = links[0], links[1], links[2]
 
-        #Might see if we can pull from HF Model API and parse readme for relvant URLs Before using GenAI?
-        if links[0] in (None, ''):
-            links[0] = get_code_url_from_genai(links[2])
-        if links[1] in (None, ''):
-            links[1] = get_dataset_url_from_genai(links[2])
+        # Category: for Phase 1 we primarily tag MODEL rows
+        categories[key] = "MODEL" if _valid_model_url(model_url) or (model_url and model_url.strip()) else None
 
+        # Fill missing links using Purdue GenAI Studio (LLM usage)
+        if not _valid_code_url(code_url) and model_url:
+            filled = get_code_url_from_genai(model_url)
+            if filled:
+                links[0] = filled
+        if not _valid_dataset_url(dataset_url) and model_url:
+            filled = get_dataset_url_from_genai(model_url)
+            if filled:
+                links[1] = filled
     return categories
 
-        
-def handle_url(models: dict) -> dict:
-    """
-    Returns a dictionary with the detected category and name for the URL.
-    Computes all metrics and maps them to the NDJSON schema.
-    """
 
-    # results, summary = run_metrics(ops, context=context)
+# ---------- main entry ----------
 
-    # Gets Categories for ALL inputs and fills in missing code/dataset URLs using GenAI
+def handle_url(models: Dict[str, List[Optional[str]]]) -> Dict[str, dict]:
+    """
+    Compute metrics and map to NDJSON for each input row.
+
+    Returns a dict keyed by the same ids as `models`.
+    """
     categories = get_url_category(models)
+    ndjsons: Dict[str, dict] = {}
 
-
-    ndjsons = {}
-
-    for i, links in models.items():
+    for key, links in models.items():
         code_url, dataset_url, model_url = links[0], links[1], links[2]
-        context = {"code_url": code_url, "dataset_url": dataset_url, "model_url": model_url} # need to delete to move on
 
+        # Fetch comprehensive context (HF API + GitHub + heuristics)
+        comprehensive = fetch_comprehensive_metrics_data(
+            code_url=code_url or "",
+            dataset_url=dataset_url or "",
+            model_url=model_url or "",
+        )
+        context = {
+            "code_url": code_url,
+            "dataset_url": dataset_url,
+            "model_url": model_url,
+            **comprehensive,
+        }
 
-        # Fetch comprehensive data for all metrics
-        # need to uncomment to move on 74-82
-        #comprehensive_data = fetch_comprehensive_metrics_data(code_url, dataset_url, model_url)
-        
-        # Use the comprehensive data as context
-        #context = {
-        #    "code_url": code_url, 
-        #    "dataset_url": dataset_url, 
-        #    "model_url": model_url,
-        #    **comprehensive_data  # Merge all the fetched data
-        #}
-        ops = default_ops
-        results, summary = run_metrics(ops, context=context)
+        results, summary = run_metrics(default_ops, context=context)
 
-        ndjson_args = {}
-        # Map MetricResult objects to NDJSON fields
-        def get_metric(metric_id, default=None):
+        # helpers for mapping
+        def get_metric(metric_id: str, default=None):
             m = results.get(metric_id)
-            return m.value if m else default
-        def get_latency(metric_id):
+            return m.value if m is not None else default
+
+        def get_latency(metric_id: str) -> Optional[int]:
             m = results.get(metric_id)
-            return int(m.seconds * 1000) if m else None
-        
-        # Size score is a dict
+            return int(m.seconds * 1000) if m is not None and hasattr(m, "seconds") else None
+
         size_metric = results.get("size")
-        size_score = size_metric.details["size_score"] if size_metric and "size_score" in size_metric.details else None
-        ndjson_args.update({
-            # "net_score": summary.get("net_score"),
-            # "net_score_latency": int(summary.get("net_score_latency", 0)),
-            "net_score": 0.0075,
-            "net_score_latency": 2,
-            # "ramp_up_time": get_metric("ramp_up_time"),
-            # "ramp_up_time_latency": get_latency("ramp_up_time"),
-            "ramp_up_time": 0.005,
+        size_score = size_metric.details.get("size_score") if size_metric and hasattr(size_metric, "details") else None
+
+        ndjson_args = {
+            # summary
+            "net_score": float(summary.get("net_score", 0.0)),
+            "net_score_latency": int(summary.get("net_score_latency", 0) or 0),
+            # individual metrics
+            "ramp_up_time": get_metric("ramp_up_time"),
             "ramp_up_time_latency": get_latency("ramp_up_time"),
             "bus_factor": get_metric("bus_factor"),
             "bus_factor_latency": get_latency("bus_factor"),
@@ -152,10 +182,10 @@ def handle_url(models: dict) -> dict:
             "performance_claims_latency": get_latency("performance_claims"),
             "license": get_metric("license_compliance"),
             "license_latency": get_latency("license_compliance"),
-            "raspberry_pi": size_score["raspberry_pi"] if size_score else None,
-            "jetson_nano": size_score["jetson_nano"] if size_score else None,
-            "desktop_pc": size_score["desktop_pc"] if size_score else None,
-            "aws_server": size_score["aws_server"] if size_score else None,
+            "raspberry_pi": size_score.get("raspberry_pi") if isinstance(size_score, dict) else None,
+            "jetson_nano": size_score.get("jetson_nano") if isinstance(size_score, dict) else None,
+            "desktop_pc": size_score.get("desktop_pc") if isinstance(size_score, dict) else None,
+            "aws_server": size_score.get("aws_server") if isinstance(size_score, dict) else None,
             "size_score_latency": get_latency("size"),
             "dataset_and_code_score": get_metric("availability"),
             "dataset_and_code_score_latency": get_latency("availability"),
@@ -163,8 +193,8 @@ def handle_url(models: dict) -> dict:
             "dataset_quality_latency": get_latency("dataset_quality"),
             "code_quality": get_metric("code_quality"),
             "code_quality_latency": get_latency("code_quality"),
-        })
+        }
 
-        ndjsons[i] = default_ndjson(model=model_url, category=categories[i], **ndjson_args)
+        ndjsons[key] = default_ndjson(model=model_url, category=categories.get(key), **ndjson_args)
 
-    return ndjsons  
+    return ndjsons
