@@ -18,6 +18,12 @@ def _check_env_variables() -> None:
     if verbosity < 0 or verbosity > 2:
         sys.exit(1)
 
+    try:
+        lf = open(log_file, "a")
+        sys.stderr = lf
+    except OSError:
+        sys.exit(1)
+        
     if log_file:
         if verbosity == 0:
             # LOG_LEVEL=0 => create/truncate an empty file and DO NOT redirect stderr.
@@ -29,11 +35,6 @@ def _check_env_variables() -> None:
             logging.disable(logging.CRITICAL)  # silence all logging
         else:
             # LOG_LEVEL>0 => redirect stderr to the log and enable logging to that file.
-            try:
-                lf = open(log_file, "a")
-                sys.stderr = lf
-            except OSError:
-                sys.exit(1)
             # map levels: 1 => INFO, 2 => DEBUG
             level = logging.INFO if verbosity == 1 else logging.DEBUG
             logging.basicConfig(
