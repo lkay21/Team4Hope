@@ -21,6 +21,7 @@ def _check_env_variables() -> None:
             lf = open(log_file, "r+")
             sys.stderr = lf
         except OSError:
+            print("error")
             sys.exit(1)
     if not tok:
         sys.exit(1)
