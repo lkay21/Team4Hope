@@ -63,9 +63,14 @@ def extract_hf_model_id(hf_url: str) -> Optional[str]:
                 # e.g., https://huggingface.co/datasets/user/name -> "user/name"
                 return f"{parts[1]}/{parts[2]}"
 
-        # model URLs are <owner>/<name> (e.g., facebook/bart-base)
+        # model URLs can be:
+        # - <owner>/<name> (e.g., facebook/bart-base)
+        # - <name> (e.g., bert-base-uncased - legacy format)
         if len(parts) >= 2:
             return f"{parts[0]}/{parts[1]}"
+        elif len(parts) == 1:
+            # Handle legacy single-name models like bert-base-uncased
+            return parts[0]
     except Exception:
         pass
     return None
@@ -126,9 +131,10 @@ def get_huggingface_model_data(model_url: str) -> Dict[str, Any]:
             for fp in files:
                 try:
                     fi = api.get_paths_info(model_id, fp, repo_type="model")
-                    size = getattr(fi, "size", None)
-                    if size:
-                        total_size += int(size)
+                    if fi and len(fi) > 0:  # fi is a list
+                        size = fi[0].size   # Get size from the first (and typically only) RepoFile object
+                        if size:
+                            total_size += int(size)
                 except Exception:
                     continue
         except Exception:
@@ -286,6 +292,98 @@ def compute_size_scores(total_size_bytes: int) -> Dict[str, float]:
     aws = max(0.01, min(1.0, 1.0 - (total_size_bytes / (100 * gb))))
     return {"raspberry_pi": rpi, "jetson_nano": jetson, "desktop_pc": desktop, "aws_server": aws}
 
+
+def analyze_performance_claims(hf_model_data: Dict[str, Any], github_files: List[str] = None) -> Dict[str, Any]:
+    """
+    Enhanced performance claims analysis that looks for multiple indicators.
+    
+    Returns a dict with 'requirements_passed', 'requirements_total', and 'details'.
+    """
+    if github_files is None:
+        github_files = []
+    
+    performance_indicators = []
+    details = {}
+    
+    # 1. Check HuggingFace card_data for performance indicators
+    card_data = hf_model_data.get("card_data", {}) or {}
+    
+    # Convert ModelCardData to dict if needed
+    if hasattr(card_data, 'to_dict'):
+        try:
+            card_dict = card_data.to_dict()
+        except Exception:
+            card_dict = {}
+    elif hasattr(card_data, '__dict__'):
+        card_dict = card_data.__dict__
+    else:
+        card_dict = card_data if isinstance(card_data, dict) else {}
+    
+    # Original model-index check (formal benchmark structure)
+    has_model_index = "model-index" in card_dict
+    performance_indicators.append(("model_index", has_model_index, 0.3))
+    details["model_index"] = has_model_index
+    
+    # Training datasets mentioned (indicates benchmarking context)
+    has_datasets = bool(card_dict.get("datasets", []))
+    performance_indicators.append(("datasets_mentioned", has_datasets, 0.2))
+    details["datasets_mentioned"] = has_datasets
+    
+    # Evaluation results in metadata
+    has_eval_results = bool(card_dict.get("eval_results", []))
+    performance_indicators.append(("eval_results", has_eval_results, 0.25))
+    details["eval_results"] = has_eval_results
+    
+    # Performance metrics mentioned
+    has_metrics = bool(card_dict.get("metrics", []))
+    performance_indicators.append(("metrics_metadata", has_metrics, 0.2))
+    details["metrics_metadata"] = has_metrics
+    
+    # Pipeline tag suggests specific use case (indirect performance indicator)
+    pipeline_tag = hf_model_data.get("pipeline_tag")
+    has_pipeline_tag = bool(pipeline_tag and pipeline_tag.strip())
+    performance_indicators.append(("pipeline_tag", has_pipeline_tag, 0.15))
+    details["pipeline_tag"] = pipeline_tag if has_pipeline_tag else None
+    
+    # 2. Check for README-like files in GitHub (common performance claim location)
+    readme_files = [f for f in github_files if f.lower().startswith('readme') or 'readme' in f.lower()]
+    has_readme = len(readme_files) > 0
+    performance_indicators.append(("readme_available", has_readme, 0.1))
+    details["readme_available"] = has_readme
+    
+    # Benchmarking-related files
+    benchmark_files = [
+        f for f in github_files 
+        if any(keyword in f.lower() for keyword in ['benchmark', 'eval', 'test', 'metric', 'result'])
+    ]
+    has_benchmark_files = len(benchmark_files) > 0
+    performance_indicators.append(("benchmark_files", has_benchmark_files, 0.15))
+    details["benchmark_files"] = len(benchmark_files)
+    
+    # 3. Calculate weighted score
+    weighted_score = 0.0
+    total_weight = 0.0
+    passed_count = 0
+    
+    for indicator_name, has_indicator, weight in performance_indicators:
+        total_weight += weight
+        if has_indicator:
+            weighted_score += weight
+            passed_count += 1
+    
+    # Normalize the weighted score
+    final_score = weighted_score / total_weight if total_weight > 0 else 0.0
+    
+    # For backwards compatibility, also provide simple counts
+    total_indicators = len(performance_indicators)
+    
+    return {
+        "requirements_passed": passed_count,
+        "requirements_total": total_indicators,
+        "requirements_score": final_score,  # Weighted score for the metric
+        "details": details
+    }
+
 # ---------------------------------------------------------------------
 # Main aggregator
 # ---------------------------------------------------------------------
@@ -317,10 +415,12 @@ def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url:
         data["availability"] = check_availability(code_url, dataset_url, model_url)
 
         # HF model
+        hf_model_data = {}  # Store for later use with GitHub files
         if model_url and "huggingface.co" in model_url and "/datasets/" not in model_url:
             logger.info(f"Fetching HF model data from {model_url}")
             hf_m = get_huggingface_model_data(model_url)
             if hf_m:
+                hf_model_data = hf_m  # Store for later
                 if hf_m.get("license"):
                     data["license"] = hf_m.get("license")
                 downloads = int(hf_m.get("downloads", 0) or 0)
@@ -330,9 +430,13 @@ def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url:
                 data["ramp"]["recency_norm"] = 0.7  # default; refined by GitHub below
                 total_size = int(hf_m.get("total_size_bytes", 0) or 0)
                 data["size_components"] = compute_size_scores(total_size)
-                card_data = hf_m.get("card_data", {}) or {}
-                if "model-index" in card_data:
-                    data["requirements_passed"], data["requirements_total"] = 1, 1
+                
+                # Initial performance claims analysis (will be refined with GitHub data later)
+                perf_analysis = analyze_performance_claims(hf_m, [])
+                data["requirements_passed"] = perf_analysis["requirements_passed"]
+                data["requirements_total"] = perf_analysis["requirements_total"] 
+                data["requirements_score"] = perf_analysis["requirements_score"]
+                data["performance_details"] = perf_analysis["details"]
 
         # HF dataset
         if dataset_url and "huggingface.co/datasets" in dataset_url:
@@ -363,6 +467,15 @@ def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url:
                 data["ramp"].setdefault("likes_norm", normalize_stars(stars))
                 if not data.get("license") and gh.get("license"):
                     data["license"] = gh["license"]
+                
+                # Refine performance claims analysis with GitHub files if we have HF model data
+                if hf_model_data:
+                    perf_analysis = analyze_performance_claims(hf_model_data, files)
+                    data["requirements_passed"] = perf_analysis["requirements_passed"]
+                    data["requirements_total"] = perf_analysis["requirements_total"]
+                    data["requirements_score"] = perf_analysis["requirements_score"]
+                    data["performance_details"] = perf_analysis["details"]
+                
                 # recency from updated_at
                 try:
                     from datetime import datetime, timezone
