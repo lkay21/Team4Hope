@@ -29,31 +29,21 @@ class LicenseComplianceMetric:
     def compute(self, context: Dict[str, Any]) -> MetricResult:
         import time
         start = time.time()
-        model_url = context.get("model_url", "")
+        
+        # Get license from context
+        license_str = context.get("license", "")
         allow = set(context.get("compatible_licenses", self.DEFAULT_COMPATIBLE_LICENSES))
         detected_license = ""
         value = 0.0
 
-        # Try to get license from README
-        readme_path = None
-        if model_url:
-            try:
-                readme_path = get_huggingface_file(model_url)
-            except Exception as e:
-                readme_path = None
-
-        if readme_path:
-            try:
-                with open(readme_path, "r", encoding="utf-8") as f:
-                    readme_text = f.read().lower()
-                    # Search for license keywords
-                    for lic in allow:
-                        if re.search(rf"\b{re.escape(lic)}\b", readme_text):
-                            detected_license = lic
-                            value = 1.0
-                            break
-            except Exception as e:
-                pass
+        if license_str:
+            license_lower = license_str.lower()
+            # Check if any allowed license matches (case-insensitive)
+            for lic in allow:
+                if lic.lower() in license_lower:
+                    detected_license = lic.lower()
+                    value = 1.0
+                    break
 
         seconds = time.time() - start
-        return MetricResult(self.id, value, details={"license": detected_license}, binary=0, seconds=seconds)
+        return MetricResult(self.id, value, details={"license": detected_license}, binary=1 if value > 0 else 0, seconds=seconds)
