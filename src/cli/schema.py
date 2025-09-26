@@ -1,9 +1,16 @@
+from urllib.parse import urlparse
+import re
+
 def default_ndjson(model, category=None, net_score=None, net_score_latency=None, ramp_up_time=None, ramp_up_time_latency=None, bus_factor=None, bus_factor_latency=None,
     performance_claims=None, performance_claims_latency=None, license=None, license_latency=None, raspberry_pi=None, jetson_nano=None, desktop_pc=None, aws_server=None, size_score_latency=None, dataset_and_code_score=None, dataset_and_code_score_latency=None,
     dataset_quality=None, dataset_quality_latency=None, code_quality=None,code_quality_latency=None):
     
     if category is not None:
-        name = model.strip().rstrip('/').split('/')[-1]
+        hf_match = re.match(r"https?://huggingface\.co/([^/]+)/([^/]+)", model)
+        if hf_match:
+            name = hf_match.group(2)
+        else:
+            name = model.rstrip("/").split("/")[-1]
     else:
         name = None
 
