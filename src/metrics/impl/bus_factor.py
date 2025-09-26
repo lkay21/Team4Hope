@@ -5,10 +5,13 @@ from ..data_fetcher import get_genai_metric_data
 
 class BusFactorMetric:
     """
-    Evaluate knowledge concentration in model development using GenAI LLM analysis.
+    Evaluate bus factor (contribution distribution) using GenAI LLM analysis.
     Returns a score in [0, 1] range where:
-    - 0 represents low necessary knowledge concentration (good - distributed knowledge)
-    - 1 represents high knowledge concentration (bad - concentrated knowledge)
+    - 0 represents poor bus factor (highly concentrated contributions/knowledge)  
+    - 1 represents good bus factor (well-distributed contributions/knowledge)
+    
+    For GenAI analysis, we assess knowledge concentration and invert it to match
+    traditional bus factor interpretation.
     """
     id = "bus_factor"
     
@@ -28,7 +31,10 @@ class BusFactorMetric:
             # Fallback to original heuristic method
             meta = context.get("repo_meta", {})
             top_pct = float(meta.get("top_contributor_pct", 1.0))
-            value = min(1.0, max(0.0, top_pct))  # Direct mapping for knowledge concentration
+            # Traditional bus factor: higher = better (1 - top_pct)
+            # But for knowledge concentration: higher = worse
+            # So we need to invert: high top_contributor_pct = low bus factor = high knowledge concentration
+            value = min(1.0, max(0.0, 1.0 - top_pct))  # Invert for traditional bus factor meaning
             seconds = time.time() - start
             return MetricResult(self.id, value, details={
                 "fallback": "no_url", 
@@ -36,22 +42,21 @@ class BusFactorMetric:
                 "method": "heuristic"
             }, binary=0, seconds=seconds)
         
-        # Create prompt for knowledge concentration evaluation
-        prompt = """Analyze the knowledge concentration for this model/repository by examining READMEs, documentation, and comparing against well-documented research papers or discoveries.
+        # Create prompt for bus factor evaluation  
+        prompt = """Analyze the bus factor for this model/repository by examining READMEs, documentation, and contributor distribution.
 
-Calculate the overlap percentage between the documentation and established research to determine knowledge concentration:
-
-- High overlap with well-documented research = Low knowledge concentration (closer to 0.0)
-- Low overlap with established research = High knowledge concentration (closer to 1.0)
+Bus factor measures how well knowledge and contributions are distributed:
+- High bus factor (closer to 1.0) = Knowledge is well-distributed, good documentation, builds on established research
+- Low bus factor (closer to 0.0) = Knowledge is concentrated, poor documentation, requires specialized knowledge
 
 Consider:
 1. How well the README/documentation references existing research
-2. Whether the approach builds on established methods
-3. How much specialized/unique knowledge is required
+2. Whether the approach builds on established methods  
+3. How accessible the knowledge is to new contributors
 4. Documentation quality and completeness
 5. Overlap with well-known techniques and papers
 
-Return only a decimal number between 0.0 and 1.0 representing knowledge concentration level.
+Return only a decimal number between 0.0 and 1.0 representing bus factor score.
 URL:"""
 
         try:
@@ -103,7 +108,7 @@ URL:"""
             # Fallback to original heuristic method
             meta = context.get("repo_meta", {})
             top_pct = float(meta.get("top_contributor_pct", 1.0))
-            value = min(1.0, max(0.0, top_pct))  # Direct mapping for knowledge concentration
+            value = min(1.0, max(0.0, 1.0 - top_pct))  # Traditional bus factor calculation
             details = {
                 "error": str(e)[:100],
                 "fallback": "heuristic_method",
