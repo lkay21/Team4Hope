@@ -50,7 +50,7 @@ class TestURLValidation:
         assert _valid_dataset_url("https://huggingface.co/datasets/owner/dataset") is True
         assert _valid_dataset_url("https://huggingface.co/datasets/microsoft/squad") is True
 
-    @patch.dict(os.environ, {"GEN_AI_STUDIO_API_KEY": "test_key"})
+    @patch('src.url_parsers.url_type_handler.PURDUE_GENAI_API_KEY', 'test_key')
     @patch('src.url_parsers.url_type_handler._genai_single_url')
     def test_valid_dataset_url_genai_fallback(self, mock_genai):
         """Test dataset URL validation with GenAI fallback."""
@@ -141,7 +141,7 @@ class TestGenAIIntegration:
             if original_key:
                 os.environ["GEN_AI_STUDIO_API_KEY"] = original_key
 
-    @patch.dict(os.environ, {"GEN_AI_STUDIO_API_KEY": "test_key"})
+    @patch('src.url_parsers.url_type_handler.PURDUE_GENAI_API_KEY', 'test_key')
     @patch('requests.post')
     def test_genai_single_url_success(self, mock_post):
         """Test successful GenAI call."""
@@ -155,7 +155,7 @@ class TestGenAIIntegration:
         result = _genai_single_url("test prompt")
         assert result == "https://example.com/result"
 
-    @patch.dict(os.environ, {"GEN_AI_STUDIO_API_KEY": "test_key"})
+    @patch('src.url_parsers.url_type_handler.PURDUE_GENAI_API_KEY', 'test_key')
     @patch('requests.post')
     def test_genai_single_url_no_url_in_response(self, mock_post):
         """Test GenAI call with no URL in response."""
@@ -169,7 +169,7 @@ class TestGenAIIntegration:
         result = _genai_single_url("test prompt")
         assert result is None
 
-    @patch.dict(os.environ, {"GEN_AI_STUDIO_API_KEY": "test_key"})
+    @patch('src.url_parsers.url_type_handler.PURDUE_GENAI_API_KEY', 'test_key')
     @patch('requests.post')
     def test_genai_single_url_api_error(self, mock_post):
         """Test GenAI call with API error."""
