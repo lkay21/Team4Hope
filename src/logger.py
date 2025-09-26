@@ -11,9 +11,6 @@ def get_logger(name: str = "team4hope") -> logging.Logger:
 
     log_level_env = int(os.getenv("LOG_LEVEL", "0"))
     log_file = os.getenv("LOG_FILE")
-    
-    if log_file and os.path.dirname(log_file):
-        os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
     try:
         level = int(log_level_env)
@@ -38,8 +35,8 @@ def get_logger(name: str = "team4hope") -> logging.Logger:
     #     ch.setFormatter(formatter)
     #     logger.addHandler(ch)
 
-    # File handler
-    if log_file and level > 0:
+    # File handler - only write to existing files
+    if log_file and level > 0 and os.path.exists(log_file):
         fh = logging.FileHandler(log_file)
         fh.setLevel(logger.level)
         fh.setFormatter(formatter)
