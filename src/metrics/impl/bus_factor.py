@@ -13,6 +13,7 @@ class BusFactorMetric:
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
         import time
+        import os
         start = time.time()
         
         # Try LLM first if model_url is available
@@ -21,15 +22,40 @@ class BusFactorMetric:
         llm_used = False
         
         if model_url:
-            prompt = "Estimate the bus factor score (0-1) for this model repository. Bus factor measures how well-distributed the contributions are among developers. Higher scores mean better distribution. Reply with a single number between 0 and 1:"
+            prompt = "Estimate the bus factor score (0-1, which can and most likely be a fractional output) for this model repository. Bus factor measures how well-distributed the contributions are among developers. Higher scores mean better distribution. Reply with a single number between 0 and 1:"
             llm_result = get_genai_metric_data(model_url, prompt)
             if llm_result.get("metric"):
                 try:
                     import re
-                    # Extract first number from the response
-                    match = re.search(r"([-+]?[0-9]*\.?[0-9]+)", llm_result["metric"])
-                    if match:
-                        llm_value = float(match.group(1))
+                    response = llm_result["metric"]
+                    
+                    # Look for patterns like "0.8", "0.75", "score: 0.6" etc.
+                    # Try multiple patterns to find the actual score
+                    patterns = [
+                        r"\*\*([0-9]*\.?[0-9]+)\*\*",    # **0.75** (markdown bold)
+                        r"\\boxed\{([0-9]*\.?[0-9]+)\}", # $\boxed{0.05}$
+                        r"score[:\s]*([0-9]*\.?[0-9]+)",  # "score: 0.8" or "score 0.8"
+                        r"factor[:\s]*([0-9]*\.?[0-9]+)", # "Bus Factor Score: 0.7"
+                        r"([0-9]*\.?[0-9]+)\s*$",        # number at end of line
+                        r"([0-9]*\.?[0-9]+)\s*\)", # number followed by closing paren  
+                    ]
+                    
+                    llm_value = None
+                    for pattern in patterns:
+                        matches = re.findall(pattern, response.lower())
+                        for match in matches:
+                            try:
+                                val = float(match)
+                                # Only accept values that make sense for bus factor (0-100)
+                                if 0 <= val <= 100:
+                                    llm_value = val
+                                    break
+                            except ValueError:
+                                continue
+                        if llm_value is not None:
+                            break
+                    
+                    if llm_value is not None:
                         # If it looks like a percentage, convert to 0-1 range
                         if llm_value > 1.0:
                             llm_value = llm_value / 100.0
