@@ -176,7 +176,18 @@ def handle_url(models: Dict[str, List[Optional[str]]]) -> Dict[str, dict]:
             **comprehensive,
         }
 
-        results, summary = run_metrics(default_ops, context=context)
+        metric_latency_map = {
+            "ramp_up_time": "hf_model_latency",
+            "bus_factor": "github_latency",
+            "performance_claims": "hf_model_latency",
+            "license_compliance": "github_latency",  
+            "size": "hf_model_latency",
+            "availability": "availability_latency",
+            "dataset_quality": "hf_dataset_latency",
+            "code_quality": "github_latency",
+        }
+
+        results, summary, latencies = run_metrics(default_ops, context=context)
 
         # helpers for mapping
         def get_metric(metric_id: str, default=None):
@@ -184,8 +195,9 @@ def handle_url(models: Dict[str, List[Optional[str]]]) -> Dict[str, dict]:
             return m.value if m is not None else default
 
         def get_latency(metric_id: str) -> Optional[int]:
-            m = results.get(metric_id)
-            return int(m.seconds * 1000) if m is not None and hasattr(m, "seconds") else None
+            latency_key = metric_latency_map.get(metric_id)
+            m = latencies.get(latency_key) if latency_key else None
+            return int(m * 1000) if m is not None else None
 
         size_metric = results.get("size")
         size_score = size_metric.details.get("size_score") if size_metric and hasattr(size_metric, "details") else None

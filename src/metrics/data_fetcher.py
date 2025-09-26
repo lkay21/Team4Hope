@@ -10,8 +10,10 @@ from __future__ import annotations
 import logging
 import math
 import os
+import time
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
+
 
 import requests
 
@@ -412,13 +414,17 @@ def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url:
 
     try:
         # availability
+        avail_start = time.time()
         data["availability"] = check_availability(code_url, dataset_url, model_url)
+        data["availability_latency"] = time.time() - avail_start
 
         # HF model
         hf_model_data = {}  # Store for later use with GitHub files
         if model_url and "huggingface.co" in model_url and "/datasets/" not in model_url:
+            hf_model_start = time.time()
             logger.info(f"Fetching HF model data from {model_url}")
             hf_m = get_huggingface_model_data(model_url)
+            data["hf_model_latency"] = time.time() - hf_model_start
             if hf_m:
                 hf_model_data = hf_m  # Store for later
                 if hf_m.get("license"):
@@ -441,7 +447,9 @@ def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url:
         # HF dataset
         if dataset_url and "huggingface.co/datasets" in dataset_url:
             logger.info(f"Fetching HF dataset data from {dataset_url}")
+            hf_dataset_start = time.time()
             hf_d = get_huggingface_dataset_data(dataset_url)
+            data["hf_dataset_latency"] = time.time() - hf_dataset_start
             if hf_d:
                 desc = (hf_d.get("description") or "").strip()
                 features = (hf_d.get("features") or "").strip()
@@ -457,7 +465,9 @@ def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url:
         # GitHub repo
         if code_url and "github.com" in code_url:
             logger.info(f"Fetching GitHub data from {code_url}")
+            gh_start = time.time()
             gh = get_github_repo_data(code_url)
+            data["github_latency"] = time.time() - gh_start
             if gh:
                 data["repo_meta"] = gh.get("contributors", {})
                 files = gh.get("files", [])
@@ -514,4 +524,8 @@ def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url:
             "requirements_passed": 0,
             "requirements_total": 1,
             "compatible_licenses": ["mit", "apache-2.0", "bsd-3-clause", "bsd", "mpl-2.0"],
+            "availability_latency": None,
+            "hf_model_latency": None,
+            "hf_dataset_latency": None,
+            "github_latency": None,
         }
