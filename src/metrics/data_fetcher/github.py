@@ -6,8 +6,9 @@ import os
 from typing import Any, Dict
 
 from .utils import safe_request, extract_repo_info
+from src.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("data_fetcher.github")
 
 
 def get_github_repo_data(code_url: str) -> Dict[str, Any]:

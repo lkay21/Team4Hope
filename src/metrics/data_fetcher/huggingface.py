@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Dict, Optional
+from src.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("data_fetcher.huggingface")
 
 
 def get_huggingface_model_data(model_url: str) -> Dict[str, Any]:
