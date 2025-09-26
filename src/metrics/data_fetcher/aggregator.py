@@ -43,6 +43,22 @@ def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url:
         data["availability"] = df.check_availability(code_url, dataset_url, model_url)
         data["availability_latency"] = time.time() - avail_start
 
+        #LOCAL ARTIFACT EXAMPLE
+        # try:
+        #     # local_path = get_huggingface_file(model_url)
+        # except Exception as e:
+        #     logger.debug(f"Failed to get huggingface file: {e}")
+        #     # local_path = None
+
+        #LLM EXAMPLE
+        # try:
+        #     prompt = f"Provide me a rating 0 to 1 for this models license compliance by investigating its licensing descriptions via it's {model_url}.0 Represents no compliance and 1 represents full compliance. Only provide the number and it is strictly binary." 
+        #     llm_data_str = get_genai_metric_data(model_url, prompt)
+        #     print(llm_data_str)
+        # except Exception as e:
+        #     logger.debug(f"Failed to get GenAI metric data: {e}")
+        #     # llm_data_str = "0"  
+
         # HF model
         hf_model_data = {}  # Store for later use with GitHub files
         if model_url and "huggingface.co" in model_url and "/datasets/" not in model_url:
