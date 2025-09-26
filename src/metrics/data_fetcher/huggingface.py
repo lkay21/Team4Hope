@@ -90,3 +90,19 @@ def get_huggingface_dataset_data(dataset_url: str) -> Dict[str, Any]:
     except Exception as e:
         logger.debug(f"Failed to fetch HF dataset data: {e}")
         return {}
+
+def get_huggingface_file(model_url: str):
+    from src.metrics.data_fetcher import extract_hf_model_id
+
+    repo_id = extract_hf_model_id(model_url)
+    file_name = "README.md"  # or "config.json", etc.
+    if not repo_id:
+        return None
+    try:
+        from huggingface_hub import hf_hub_download
+        local_file_path = hf_hub_download(repo_id=repo_id, filename=file_name, cache_dir="/home/shay/a/kay21/Documents/Team4Hope/hf_cache")
+    except Exception as e:
+        logger.debug(f"Failed to download {file_name} from {repo_id}: {e}")
+        return None
+
+    return local_file_path
