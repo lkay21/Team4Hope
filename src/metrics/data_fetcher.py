@@ -11,13 +11,21 @@ import logging
 import math
 import os
 import time
+import sys
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 
+# Purdue GenAI Studio
+PURDUE_GENAI_API_KEY = os.getenv("GEN_AI_STUDIO_API_KEY")
+PURDUE_GENAI_URL = "https://genai.rcac.purdue.edu/api/chat/completions"
+
 import requests
 
 logger = logging.getLogger(__name__)
+
+
+
 # ---------------------------------------------------------------------
 # Utilities
 # ---------------------------------------------------------------------
@@ -257,6 +265,38 @@ def get_github_repo_data(code_url: str) -> Dict[str, Any]:
 
     return data
 
+
+# ---------------------------------------------------------------------
+# LLM Metric Computation Helper
+# ---------------------------------------------------------------------
+def get_genai_metric_data(model_url: str, prompt: str) -> Dict[str, Any]:
+    headers = {
+        "Authorization": f"Bearer {PURDUE_GENAI_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    body = {
+        "model": "llama3.1:latest",
+        "messages": [
+            {
+                "role": "user",
+                "content": "" + prompt + " " + model_url
+            }
+        ],
+    }
+    response = requests.post(PURDUE_GENAI_URL, headers=headers, json=body)
+    if response.status_code == 200:
+        # print(response.text)
+        data = response.json()
+        metric = data["choices"][0]["message"]["content"].strip()
+    else:
+        # raise Exception(f"Error: {response.status_code}, {response.text}")
+        sys.exit(1)
+
+    return metric 
+    
+
+
+
 # ---------------------------------------------------------------------
 # Local/code heuristics & normalizers
 # ---------------------------------------------------------------------
@@ -435,11 +475,23 @@ def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url:
         # HF model
         hf_model_data = {}  # Store for later use with GitHub files
         if model_url and "huggingface.co" in model_url and "/datasets/" not in model_url:
+
+            #LOCAL ARTIFACT EXAMPLE
             # try:
             #     # local_path = get_huggingface_file(model_url)
             # except Exception as e:
             #     logger.debug(f"Failed to get huggingface file: {e}")
             #     # local_path = None
+
+            #LLM EXAMPLE
+            # try:
+            #     prompt = f"Provide me a rating 0 to 1 for this models license compliance by investigating its licensing descriptions via it's {model_url}.0 Represents no compliance and 1 represents full compliance. Only provide the number and it is strictly binary." 
+            #     llm_data_str = get_genai_metric_data(model_url, prompt)
+            #     print(llm_data_str)
+            # except Exception as e:
+            #     logger.debug(f"Failed to get GenAI metric data: {e}")
+            #     # llm_data_str = "0"  
+
             hf_model_start = time.time()
             logger.info(f"Fetching HF model data from {model_url}")
             hf_m = get_huggingface_model_data(model_url)
