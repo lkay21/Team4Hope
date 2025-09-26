@@ -310,6 +310,131 @@ class TestPerformanceClaimsMetric:
         assert result.value == 0.0
 
 
+class TestCodeQualityMetric:
+    """Test the CodeQualityMetric class."""
+
+    def test_code_quality_all_components(self):
+        """Test code quality with all components."""
+        context = {
+            "code_quality": {
+                "test_coverage_norm": 0.8,
+                "style_norm": 0.7,
+                "comment_ratio_norm": 0.6,
+                "maintainability_norm": 0.9
+            }
+        }
+        
+        metric = CodeQualityMetric()
+        result = metric.compute(context)
+        
+        # Mean of all components: (0.8 + 0.7 + 0.6 + 0.9) / 4 = 0.75
+        expected = (0.8 + 0.7 + 0.6 + 0.9) / 4
+        assert abs(result.value - expected) < 0.01
+        assert result.id == "code_quality"
+        assert len(result.details["components"]) == 4
+
+    def test_code_quality_partial_components(self):
+        """Test code quality with some missing components."""
+        context = {
+            "code_quality": {
+                "test_coverage_norm": 0.9,
+                "maintainability_norm": 0.8
+                # Missing style_norm and comment_ratio_norm
+            }
+        }
+        
+        metric = CodeQualityMetric()
+        result = metric.compute(context)
+        
+        # Mean of available components: (0.9 + 0.8) / 2 = 0.85
+        expected = (0.9 + 0.8) / 2
+        assert abs(result.value - expected) < 0.01
+        assert len(result.details["components"]) == 2
+
+    def test_code_quality_no_components(self):
+        """Test code quality without any components."""
+        context = {"code_quality": {}}
+        
+        metric = CodeQualityMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 0.0
+        assert result.details["components"] == []
+
+    def test_code_quality_no_data(self):
+        """Test code quality without code_quality data."""
+        context = {}
+        
+        metric = CodeQualityMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 0.0
+        assert result.details["components"] == []
+
+    def test_code_quality_single_component(self):
+        """Test code quality with single component."""
+        context = {
+            "code_quality": {
+                "test_coverage_norm": 0.95
+            }
+        }
+        
+        metric = CodeQualityMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 0.95
+        assert len(result.details["components"]) == 1
+
+    def test_code_quality_zero_values(self):
+        """Test code quality with zero values."""
+        context = {
+            "code_quality": {
+                "test_coverage_norm": 0.0,
+                "style_norm": 0.0,
+                "comment_ratio_norm": 0.0,
+                "maintainability_norm": 0.0
+            }
+        }
+        
+        metric = CodeQualityMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 0.0
+        assert len(result.details["components"]) == 4
+
+    def test_code_quality_perfect_scores(self):
+        """Test code quality with perfect scores."""
+        context = {
+            "code_quality": {
+                "test_coverage_norm": 1.0,
+                "style_norm": 1.0,
+                "comment_ratio_norm": 1.0,
+                "maintainability_norm": 1.0
+            }
+        }
+        
+        metric = CodeQualityMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 1.0
+        assert len(result.details["components"]) == 4
+
+    def test_code_quality_timing(self):
+        """Test that code quality metric records timing."""
+        context = {
+            "code_quality": {
+                "test_coverage_norm": 0.8,
+                "style_norm": 0.7
+            }
+        }
+        
+        metric = CodeQualityMetric()
+        result = metric.compute(context)
+        
+        assert result.seconds >= 0
+        assert isinstance(result.seconds, float)
+
+
 class TestSizeMetric:
     """Test the SizeMetric class."""
 
