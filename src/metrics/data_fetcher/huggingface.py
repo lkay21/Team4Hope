@@ -4,7 +4,6 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Optional
 from src.logger import get_logger
-from src.metrics.data_fetcher import extract_hf_model_id
 
 logger = get_logger("data_fetcher.huggingface")
 
@@ -93,6 +92,8 @@ def get_huggingface_dataset_data(dataset_url: str) -> Dict[str, Any]:
         return {}
 
 def get_huggingface_file(model_url: str):
+    from src.metrics.data_fetcher import extract_hf_model_id
+
     repo_id = extract_hf_model_id(model_url)
     file_name = "README.md"  # or "config.json", etc.
     if not repo_id:
