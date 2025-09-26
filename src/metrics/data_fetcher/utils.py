@@ -6,8 +6,9 @@ from typing import Any, Dict, Optional, Tuple
 from urllib.parse import urlparse
 
 import requests
+from src.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("data_fetcher.utils")
 
 
 def safe_request(url: str, timeout: int = 10, **kwargs) -> Optional[requests.Response]:

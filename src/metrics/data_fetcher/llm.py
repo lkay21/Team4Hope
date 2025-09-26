@@ -10,8 +10,9 @@ import requests
 import logging
 import sys
 from typing import Dict, Any
+from src.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("data_fetcher.llm")
 
 # Environment-configured endpoint & key (optional)
 PURDUE_GENAI_API_KEY = os.getenv("GEN_AI_STUDIO_API_KEY")

@@ -27,8 +27,6 @@ def get_logger(name: str = "team4hope") -> logging.Logger:
     else:
         logger.setLevel(logging.DEBUG)
 
-    logger.setLevel(level)
-
     formatter = logging.Formatter(
         "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     )

@@ -10,8 +10,9 @@ from typing import Any, Dict
 # patch `src.metrics.data_fetcher.<name>` will affect the references used
 # by this aggregator.
 from .. import data_fetcher as df
+from src.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("data_fetcher.aggregator")
 
 
 def fetch_comprehensive_metrics_data(code_url: str, dataset_url: str, model_url: str) -> Dict[str, Any]:
