@@ -5,6 +5,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 from src.cli.main import main
 
 if __name__ == "__main__":
-    # All output goes to stdout per spec
-    # Exit code should be 0 on success, non-zero on failure
-    raise SystemExit(main())
+	# All output goes to stdout per spec
+	# Exit code should be 0 on success, non-zero on failure
+	raise SystemExit(main())
