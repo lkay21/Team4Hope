@@ -13,7 +13,7 @@ def get_test_coverage_summary():
     
     # Define all modules that should have tests
     required_modules = {
-        'data_fetcher': 'src/metrics/data_fetcher.py',
+        'data_fetcher': 'src/metrics/data_fetcher',
         'url_type_handler': 'src/url_parsers/url_type_handler.py', 
         'cli_main': 'src/cli/main.py',
         'metrics_implementations': 'src/metrics/impl/*.py',
