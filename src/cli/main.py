@@ -148,7 +148,7 @@ def main() -> int:
             import re
 
             result = subprocess.run(
-                [sys.executable, "-m", "pytest", "--cov", "--tb=short"],
+                [sys.executable, "-m", "pytest", "--cov=src", "--tb=short"],
                 capture_output=True,
                 text=True
             )
