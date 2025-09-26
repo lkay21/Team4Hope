@@ -127,5 +127,8 @@ def run_metrics(
                 mid, res = fut.result()
                 results[mid] = res
 
+    #latencies are last 4 values of context
+    latencies = {k: v for k, v in ctx.items() if k.endswith("_latency")}
     summary = netscore(results, ops)
-    return results, summary
+
+    return results, summary, latencies
