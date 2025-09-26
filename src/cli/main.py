@@ -177,7 +177,7 @@ def main() -> int:
                 with open(command, 'r') as f:
                     lines = f.readlines()
                     for i, line in enumerate(lines):
-                        links = [link for link in line.split(',')]
+                        links = [link.strip() for link in line.strip().split(',')]
                         models[i] = links
 
 
