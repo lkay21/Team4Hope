@@ -22,7 +22,7 @@ class BusFactorMetric:
         llm_used = False
         
         if model_url:
-            prompt = "Estimate the bus factor score (0-1, which can and most likely be a fractional output) for this model repository. Bus factor measures how well-distributed the contributions are among developers. Higher scores mean better distribution. Reply with a single number between 0 and 1:"
+            prompt = "[0, 1] range where 0 represents a low necessary knowledge concentration within the model development and a 1 represents a high knowledge concentration. This number will be calculated by cross-checking information within READMEs against well-documented research papers or other discoveries and determining an overlap percentage."
             llm_result = get_genai_metric_data(model_url, prompt)
             if llm_result.get("metric"):
                 try:
