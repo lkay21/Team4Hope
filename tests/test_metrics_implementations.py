@@ -232,6 +232,113 @@ class TestLicenseComplianceMetric:
         assert result.value == 1.0
 
 
+class TestRampUpTimeMetric:
+    """Test the RampUpTimeMetric class."""
+
+    def test_ramp_up_time_all_components(self):
+        """Test ramp-up time with all components."""
+        context = {
+            "ramp": {
+                "likes_norm": 0.8,
+                "downloads_norm": 0.9,
+                "recency_norm": 0.7
+            }
+        }
+        
+        metric = RampUpTimeMetric()
+        result = metric.compute(context)
+        
+        # Mean of all components: (0.8 + 0.9 + 0.7) / 3 = 0.8
+        expected = (0.8 + 0.9 + 0.7) / 3
+        assert abs(result.value - expected) < 0.01
+        assert result.id == "ramp_up_time"
+        assert len(result.details["components"]) == 3
+
+    def test_ramp_up_time_partial_components(self):
+        """Test ramp-up time with some missing components."""
+        context = {
+            "ramp": {
+                "likes_norm": 0.9,
+                "downloads_norm": 0.8
+                # Missing recency_norm
+            }
+        }
+        
+        metric = RampUpTimeMetric()
+        result = metric.compute(context)
+        
+        # Mean of available components: (0.9 + 0.8) / 2 = 0.85
+        expected = (0.9 + 0.8) / 2
+        assert abs(result.value - expected) < 0.01
+        assert len(result.details["components"]) == 2
+
+    def test_ramp_up_time_no_components(self):
+        """Test ramp-up time without ramp data."""
+        context = {"ramp": {}}
+        
+        metric = RampUpTimeMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 0.0
+        assert result.details["components"] == []
+
+    def test_ramp_up_time_no_data(self):
+        """Test ramp-up time without ramp key."""
+        context = {}
+        
+        metric = RampUpTimeMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 0.0
+        assert result.details["components"] == []
+
+    def test_ramp_up_time_single_component(self):
+        """Test ramp-up time with single component."""
+        context = {
+            "ramp": {
+                "likes_norm": 0.95
+            }
+        }
+        
+        metric = RampUpTimeMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 0.95
+        assert len(result.details["components"]) == 1
+
+    def test_ramp_up_time_zero_values(self):
+        """Test ramp-up time with zero values."""
+        context = {
+            "ramp": {
+                "likes_norm": 0.0,
+                "downloads_norm": 0.0,
+                "recency_norm": 0.0
+            }
+        }
+        
+        metric = RampUpTimeMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 0.0
+        assert len(result.details["components"]) == 3
+
+    def test_ramp_up_time_perfect_scores(self):
+        """Test ramp-up time with perfect scores."""
+        context = {
+            "ramp": {
+                "likes_norm": 1.0,
+                "downloads_norm": 1.0,
+                "recency_norm": 1.0
+            }
+        }
+        
+        metric = RampUpTimeMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 1.0
+        assert len(result.details["components"]) == 3
+
+
 class TestPerformanceClaimsMetric:
     """Test the PerformanceClaimsMetric class."""
 
@@ -574,6 +681,7 @@ class TestMetricIntegration:
             BusFactorMetric(),
             LicenseComplianceMetric(),
             PerformanceClaimsMetric(),
+            RampUpTimeMetric(),
             SizeMetric()
         ]
         
@@ -581,6 +689,7 @@ class TestMetricIntegration:
             "availability": {"has_code": True, "has_dataset": True, "links_ok": True},
             "repo_meta": {"top_contributor_pct": 0.3},
             "license": "mit",
+            "ramp": {"likes_norm": 0.8, "downloads_norm": 0.7, "recency_norm": 0.6},
             "requirements_score": 0.7,
             "size_components": {"raspberry_pi": 0.5, "jetson_nano": 0.8}
         }
@@ -602,6 +711,7 @@ class TestMetricIntegration:
             BusFactorMetric(), 
             LicenseComplianceMetric(),
             PerformanceClaimsMetric(),
+            RampUpTimeMetric(),
             SizeMetric()
         ]
         
@@ -621,6 +731,7 @@ class TestMetricIntegration:
             BusFactorMetric(),
             LicenseComplianceMetric(), 
             PerformanceClaimsMetric(),
+            RampUpTimeMetric(),
             SizeMetric()
         ]
         
@@ -639,6 +750,7 @@ class TestMetricIntegration:
         for _ in range(3):
             license_metric = LicenseComplianceMetric()
             perf_metric = PerformanceClaimsMetric()
+            ramp_metric = RampUpTimeMetric()
             size_metric = SizeMetric()
             
             license_result1 = license_metric.compute(context)
@@ -647,12 +759,16 @@ class TestMetricIntegration:
             perf_result1 = perf_metric.compute(context)
             perf_result2 = perf_metric.compute(context)
             
+            ramp_result1 = ramp_metric.compute(context)
+            ramp_result2 = ramp_metric.compute(context)
+            
             size_result1 = size_metric.compute(context)
             size_result2 = size_metric.compute(context)
             
             # Results should be consistent (allowing for small timing differences)
             assert license_result1.value == license_result2.value
             assert perf_result1.value == perf_result2.value
+            assert ramp_result1.value == ramp_result2.value
             assert size_result1.value == size_result2.value
 
     def test_comprehensive_metric_computation(self):
@@ -667,6 +783,11 @@ class TestMetricIntegration:
                 "top_contributor_pct": 0.25  # Good distribution
             },
             "license": "apache-2.0",
+            "ramp": {
+                "likes_norm": 0.8,
+                "downloads_norm": 0.9,
+                "recency_norm": 0.7
+            },
             "requirements_passed": 8,
             "requirements_total": 10,
             "size_components": {
@@ -682,10 +803,11 @@ class TestMetricIntegration:
         bus_factor = BusFactorMetric()
         license_compliance = LicenseComplianceMetric()
         performance_claims = PerformanceClaimsMetric()
+        ramp_up_time = RampUpTimeMetric()
         size = SizeMetric()
         
         results = {}
-        for metric in [availability, bus_factor, license_compliance, performance_claims, size]:
+        for metric in [availability, bus_factor, license_compliance, performance_claims, ramp_up_time, size]:
             result = metric.compute(comprehensive_context)
             results[result.id] = result.value
         
@@ -693,7 +815,8 @@ class TestMetricIntegration:
         assert results["availability"] == 1.0  # All components present
         assert results["bus_factor"] == 0.75  # 1 - 0.25 = 0.75
         assert results["license_compliance"] == 1.0  # Apache-2.0 is approved
-        assert results["performance_claims"] == 0.0  # No well-known model URL, so binary 0.0
+        assert results["performance_claims"] == 1.0  # High downloads_norm (0.9) triggers binary 1.0
+        assert abs(results["ramp_up_time"] - 0.8) < 0.01  # (0.8 + 0.9 + 0.7) / 3 = 0.8
         assert 0.7 <= results["size"] <= 0.8  # Mean of size components
 
 
