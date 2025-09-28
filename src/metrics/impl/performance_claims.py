@@ -17,20 +17,40 @@ class PerformanceClaimsMetric:
         if "requirements_score" in context:
             value = float(context["requirements_score"])
             details = {"mode": "weighted", "requirements_score": value}
-        elif "requirements_passed" in context and "requirements_total" in context and context.get("requirements_total", 0) > 1:
-            # Only use simple mode if we have meaningful data (total > 1 indicates real analysis was done)
+        elif "requirements_passed" in context and "requirements_total" in context:
             passed = int(context.get("requirements_passed", 0))
-            total = max(1, int(context.get("requirements_total", 1)))
-            value = passed / total
-            details = {"mode": "simple", "passed": passed, "total": total}
+            total = int(context.get("requirements_total", 1))
+            
+            if total > 1:
+                # We have meaningful data from actual analysis
+                value = passed / total
+                details = {"mode": "simple", "passed": passed, "total": total}
+            elif total == 1 and passed == 0 and self._has_meaningful_context(context):
+                # This looks like a failed analysis fallback (0 passed, 1 total) but we have good context data
+                # Use our enhanced analysis
+                performance_score = self._analyze_context_for_performance_claims(context)
+                value = performance_score
+                details = {"mode": "context_analysis", "analyzed_score": performance_score}
+            else:
+                # Use the simple calculation for genuine zero cases
+                value = passed / max(1, total)
+                details = {"mode": "simple", "passed": passed, "total": total}
         else:
-            # Fallback: Analyze available context data for performance indicators
-            performance_score = self._analyze_context_for_performance_claims(context)
-            value = performance_score
-            details = {"mode": "context_analysis", "analyzed_score": performance_score}
+            # No performance data at all - return 0
+            value = 0.0
+            details = {"mode": "no_data"}
         
         seconds = time.time() - start
         return MetricResult(self.id, value, details=details, binary=0, seconds=seconds)
+    
+    def _has_meaningful_context(self, context: Dict[str, Any]) -> bool:
+        """Check if we have enough context data to make a reasonable performance assessment."""
+        return bool(
+            context.get("model_url") or 
+            context.get("dataset_url") or 
+            context.get("code_url") or
+            context.get("availability")
+        )
     
     def _analyze_context_for_performance_claims(self, context: Dict[str, Any]) -> float:
         """Analyze available context data for performance claim indicators."""
