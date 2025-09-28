@@ -1,7 +1,8 @@
 """
-Size metric implementation.
-
-[0, 1] range where 0 = very small model/dataset size and 1 = very large in size.
+Size metric implementatio        size_score = {}
+        for hw in ["mobile", "desktop", "server"]:
+            if hw in context_data:
+                size_score[hw] = float(context_data.get(hw, 0.0))  # default to 0 if missing, 1] range where 0 = very small model/dataset size and 1 = very large in size.
 This is computed by checking normalized size scores for different hardware
 targets (e.g., Raspberry Pi, Jetson Nano, Desktop PC, AWS server).
 
@@ -20,21 +21,25 @@ class SizeMetric:
     id = "size"
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
+        """Compute size metric based on normalized size scores across different hardware targets."""
         start = time.time()
-        c = context.get("size_components", {})
+        context_data = context.get("size_components", {})
 
         # Expected hardware-specific keys
-        hardware_keys = ["raspberry_pi", "jetson_nano", "desktop_pc", "aws_server"]
+        hardware_keys = ["raspberry_pi",
+                         "jetson_nano", "desktop_pc", "aws_server"]
 
         size_score = {}
         for hw in hardware_keys:
             try:
-                size_score[hw] = float(c.get(hw, 0.0))  # default to 0 if missing
+                size_score[hw] = float(context_data.get(
+                    hw, 0.0))  # default to 0 if missing
             except (TypeError, ValueError):
                 size_score[hw] = 0.0
 
         # Compute overall value as the mean of available hardware scores
-        value = sum(size_score.values()) / len(size_score) if size_score else 0.0
+        value = sum(size_score.values()) / \
+            len(size_score) if size_score else 0.0
 
         seconds = time.time() - start
         return MetricResult(

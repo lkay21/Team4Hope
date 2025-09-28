@@ -17,12 +17,13 @@ aggregator (avoids stale local references inside the aggregator module).
 """
 
 # import helpers and expose them at package level
+
+from .aggregator import fetch_comprehensive_metrics_data
 from . import utils as _utils
 from . import huggingface as _huggingface
 from . import github as _github
 from . import heuristics as _heuristics
 from . import llm as _llm
-
 safe_request = _utils.safe_request
 extract_repo_info = _utils.extract_repo_info
 extract_hf_model_id = _utils.extract_hf_model_id
@@ -40,8 +41,8 @@ compute_size_scores = _heuristics.compute_size_scores
 analyze_performance_claims = _heuristics.analyze_performance_claims
 get_genai_metric_data = _llm.get_genai_metric_data
 
-# now import the aggregator which will import helpers from the package namespace
-from .aggregator import fetch_comprehensive_metrics_data
+# now import the aggregator which will import helpers from the package
+# namespace
 
 __all__ = [
     "safe_request",
