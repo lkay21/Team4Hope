@@ -235,44 +235,69 @@ class TestLicenseComplianceMetric:
 class TestPerformanceClaimsMetric:
     """Test the PerformanceClaimsMetric class."""
 
-    def test_performance_claims_weighted_score(self):
-        """Test performance claims with weighted score."""
-        context = {"requirements_score": 0.75}
+    def test_performance_claims_bert_model(self):
+        """Test performance claims with BERT model (should get 1.0)."""
+        context = {"model_url": "https://huggingface.co/bert-base-uncased"}
         
         metric = PerformanceClaimsMetric()
         result = metric.compute(context)
         
-        assert result.value == 0.75
+        assert result.value == 1.0
         assert result.id == "performance_claims"
-        assert result.details["mode"] == "weighted"
-        assert result.details["requirements_score"] == 0.75
+        assert result.details["mode"] == "binary"
+        assert result.details["has_performance_claims"] == True
 
-    def test_performance_claims_simple_score(self):
-        """Test performance claims with simple passed/total."""
-        context = {
-            "requirements_passed": 3,
-            "requirements_total": 5
-        }
+    def test_performance_claims_whisper_model(self):
+        """Test performance claims with Whisper model (should get 1.0)."""
+        context = {"model_url": "https://huggingface.co/openai/whisper-tiny"}
         
         metric = PerformanceClaimsMetric()
         result = metric.compute(context)
         
-        assert result.value == 0.6  # 3/5
-        assert result.details["mode"] == "simple"
-        assert result.details["passed"] == 3
-        assert result.details["total"] == 5
+        assert result.value == 1.0
+        assert result.details["mode"] == "binary"
+        assert result.details["has_performance_claims"] == True
 
-    def test_performance_claims_all_passed(self):
-        """Test performance claims with all requirements passed."""
+    def test_performance_claims_unknown_model(self):
+        """Test performance claims with unknown model (should get 0.0)."""
+        context = {"model_url": "https://huggingface.co/random/unknown-model"}
+        
+        metric = PerformanceClaimsMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 0.0
+        assert result.details["mode"] == "binary"
+        assert result.details["has_performance_claims"] == False
+
+    def test_performance_claims_high_popularity_model(self):
+        """Test performance claims with high popularity model (should get 1.0)."""
         context = {
-            "requirements_passed": 10,
-            "requirements_total": 10
+            "model_url": "https://huggingface.co/some/model",
+            "ramp": {"downloads_norm": 0.9, "likes_norm": 0.85}
         }
         
         metric = PerformanceClaimsMetric()
         result = metric.compute(context)
         
         assert result.value == 1.0
+        assert result.details["has_performance_claims"] == True
+
+    def test_performance_claims_complete_package(self):
+        """Test performance claims with complete package (code + dataset + model)."""
+        context = {
+            "model_url": "https://huggingface.co/some/model",
+            "availability": {
+                "has_code": True,
+                "has_dataset": True, 
+                "has_model": True
+            }
+        }
+        
+        metric = PerformanceClaimsMetric()
+        result = metric.compute(context)
+        
+        assert result.value == 1.0
+        assert result.details["has_performance_claims"] == True
 
     def test_performance_claims_none_passed(self):
         """Test performance claims with no requirements passed."""
@@ -293,77 +318,21 @@ class TestPerformanceClaimsMetric:
         metric = PerformanceClaimsMetric()
         result = metric.compute(context)
         
-        # Default: 0 passed, 1 total = 0/1 = 0.0
+        # Should default to 0.0 for binary approach
         assert result.value == 0.0
+        assert result.details["mode"] == "binary"
+        assert result.details["has_performance_claims"] == False
 
-    def test_performance_claims_zero_total(self):
-        """Test performance claims with zero total (edge case)."""
-        context = {
-            "requirements_passed": 0,
-            "requirements_total": 0
-        }
-        
-        metric = PerformanceClaimsMetric()
-        result = metric.compute(context)
-        
-        # max(1, 0) = 1, so 0/1 = 0.0
-        assert result.value == 0.0
-        
-    def test_performance_claims_context_analysis_bert(self):
-        """Test context-based analysis for BERT model."""
-        context = {
-            "requirements_passed": 0,
-            "requirements_total": 1,  # This triggers fallback analysis
-            "model_url": "https://huggingface.co/bert-base-uncased",
-            "code_url": "https://github.com/google-research/bert",
-            "availability": {"has_code": True, "has_dataset": True},
-            "ramp": {"downloads_norm": 0.9, "likes_norm": 0.8}
-        }
-        
-        metric = PerformanceClaimsMetric()
-        result = metric.compute(context)
-        
-        # Should get binary 1.0 for BERT
-        assert result.value == 1.0
-        assert result.details["mode"] == "context_analysis"
-        
-    def test_performance_claims_context_analysis_huggingface(self):
-        """Test context-based analysis for general HuggingFace model."""
-        context = {
-            "requirements_passed": 0,
-            "requirements_total": 1,
-            "model_url": "https://huggingface.co/some-model"
-        }
-        
-        metric = PerformanceClaimsMetric()
-        result = metric.compute(context)
-        
-        # Should get binary 0.0 for generic model
-        assert result.value == 0.0
-        assert result.details["mode"] == "context_analysis"
-        
-    def test_performance_claims_has_meaningful_context_true(self):
-        """Test _has_meaningful_context with valid context."""
-        metric = PerformanceClaimsMetric()
-        context = {"model_url": "https://huggingface.co/model"}
-        
-        assert metric._has_meaningful_context(context) is True
-        
-    def test_performance_claims_has_meaningful_context_false(self):
-        """Test _has_meaningful_context with empty context."""
-        metric = PerformanceClaimsMetric()
-        context = {}
-        
-        assert metric._has_meaningful_context(context) is False
-        
-    def test_performance_claims_analyze_context_no_indicators(self):
-        """Test context analysis with no performance indicators."""
-        metric = PerformanceClaimsMetric()
+    def test_performance_claims_no_model_url(self):
+        """Test performance claims with no model URL."""
         context = {"some_other_field": "value"}
         
-        score = metric._analyze_context_for_performance_claims(context)
-        # Should return binary 0.0 for no indicators
-        assert score == 0.0
+        metric = PerformanceClaimsMetric()
+        result = metric.compute(context)
+        
+        # Should default to 0.0 without model URL
+        assert result.value == 0.0
+        assert result.details["has_performance_claims"] == False
 
 
 class TestCodeQualityMetric:
@@ -724,7 +693,7 @@ class TestMetricIntegration:
         assert results["availability"] == 1.0  # All components present
         assert results["bus_factor"] == 0.75  # 1 - 0.25 = 0.75
         assert results["license_compliance"] == 1.0  # Apache-2.0 is approved
-        assert results["performance_claims"] == 0.8  # 8/10 = 0.8
+        assert results["performance_claims"] == 0.0  # No well-known model URL, so binary 0.0
         assert 0.7 <= results["size"] <= 0.8  # Mean of size components
 
 
