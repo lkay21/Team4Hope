@@ -16,7 +16,21 @@ class RampUpTimeMetric:
         import time
         start = time.time()
         ramp_up = context.get("ramp_up", {})
-        value = float(ramp_up.get("example_norm", 0.0))
+
+        # Get normalized components for ramp-up calculation
+        likes_norm = ramp_up.get("likes_norm", 0.0)
+        downloads_norm = ramp_up.get("downloads_norm", 0.0)
+        recency_norm = ramp_up.get("recency_norm", 0.0)
+
+        # Calculate value as average of the three normalized components
+        components = [likes_norm, downloads_norm, recency_norm]
+        non_zero_components = [c for c in components if c > 0]
+
+        if non_zero_components:
+            value = sum(non_zero_components) / len(non_zero_components)
+        else:
+            value = 0.0
+
         seconds = time.time() - start
         return MetricResult(
             self.id,
