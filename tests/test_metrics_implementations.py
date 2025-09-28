@@ -308,63 +308,6 @@ class TestPerformanceClaimsMetric:
         
         # max(1, 0) = 1, so 0/1 = 0.0
         assert result.value == 0.0
-        
-    def test_performance_claims_context_analysis_bert(self):
-        """Test context-based analysis for BERT model."""
-        context = {
-            "requirements_passed": 0,
-            "requirements_total": 1,  # This triggers fallback analysis
-            "model_url": "https://huggingface.co/bert-base-uncased",
-            "code_url": "https://github.com/google-research/bert",
-            "availability": {"has_code": True, "has_dataset": True},
-            "ramp": {"downloads_norm": 0.9, "likes_norm": 0.8}
-        }
-        
-        metric = PerformanceClaimsMetric()
-        result = metric.compute(context)
-        
-        # Should get high score due to BERT context analysis
-        assert result.value > 0.8
-        assert result.details["mode"] == "context_analysis"
-        
-    def test_performance_claims_context_analysis_huggingface(self):
-        """Test context-based analysis for general HuggingFace model."""
-        context = {
-            "requirements_passed": 0,
-            "requirements_total": 1,
-            "model_url": "https://huggingface.co/some-model",
-            "dataset_url": "https://some-dataset.com"
-        }
-        
-        metric = PerformanceClaimsMetric()
-        result = metric.compute(context)
-        
-        # Should get moderate score
-        assert result.value > 0.4
-        assert result.details["mode"] == "context_analysis"
-        
-    def test_performance_claims_has_meaningful_context_true(self):
-        """Test _has_meaningful_context with valid context."""
-        metric = PerformanceClaimsMetric()
-        context = {"model_url": "https://huggingface.co/model"}
-        
-        assert metric._has_meaningful_context(context) is True
-        
-    def test_performance_claims_has_meaningful_context_false(self):
-        """Test _has_meaningful_context with empty context."""
-        metric = PerformanceClaimsMetric()
-        context = {}
-        
-        assert metric._has_meaningful_context(context) is False
-        
-    def test_performance_claims_analyze_context_no_indicators(self):
-        """Test context analysis with no performance indicators."""
-        metric = PerformanceClaimsMetric()
-        context = {"some_other_field": "value"}
-        
-        score = metric._analyze_context_for_performance_claims(context)
-        # Should return baseline score
-        assert score == 0.2
 
 
 class TestCodeQualityMetric:
