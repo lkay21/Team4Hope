@@ -1,6 +1,7 @@
 from typing import Dict
 from .url_type_handler import get_url_category, handle_url
 
+
 def detect(url: str) -> str:
     if "huggingface.co/datasets/" in url:
         return "hf_dataset"
@@ -9,6 +10,7 @@ def detect(url: str) -> str:
     if "github.com/" in url:
         return "github_repo"
     return "unknown"
+
 
 def fetch_metadata(url: str) -> Dict:
     # Implement function

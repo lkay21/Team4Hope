@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict
 from .types import Metric
 
+
 class MetricRegistry:
     def __init__(self) -> None:
         self._by_id: Dict[str, Metric] = {}

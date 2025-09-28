@@ -3,6 +3,7 @@ Comprehensive tests for CLI functionality.
 
 Tests the main CLI functions that are actually available.
 """
+from src.cli.main import main, parse_args, _check_env_variables
 import pytest
 import sys
 import os
@@ -11,9 +12,8 @@ from unittest.mock import Mock, patch, mock_open, MagicMock
 from io import StringIO
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src'))
-
-from src.cli.main import main, parse_args, _check_env_variables
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), 'src'))
 
 
 class TestArgumentParsing:
@@ -43,7 +43,7 @@ class TestEnvironmentValidation:
         # Should not raise an exception
         _check_env_variables()
 
-    @patch.dict(os.environ, {"GITHUB_TOKEN": "github_pat_test_token"})  
+    @patch.dict(os.environ, {"GITHUB_TOKEN": "github_pat_test_token"})
     def test_check_env_variables_valid_pat_token(self):
         """Test environment check with valid PAT token."""
         # Should not raise an exception
@@ -91,7 +91,7 @@ class TestMainFunction:
         """Test main function basic execution."""
         # Mock environment check to pass
         mock_check_env.return_value = None
-        
+
         # Mock URL processing
         mock_category.return_value = {"test": "MODEL"}
         mock_handle.return_value = {
@@ -100,22 +100,22 @@ class TestMainFunction:
                 "net_score": 0.75
             }
         }
-        
+
         # Create a temporary input file
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
             f.write("https://huggingface.co/bert-base-uncased")
             temp_filename = f.name
-        
+
         try:
             with patch('sys.argv', ['main.py', temp_filename]):
                 result = main()
-            
+
             # Should complete successfully
             assert result is None or result == 0
-            
+
             # Should have called the expected functions
             mock_check_env.assert_called_once()
-            
+
         finally:
             os.unlink(temp_filename)
 
@@ -125,18 +125,18 @@ class TestMainFunction:
         """Test main function with environment check failure."""
         # Mock environment check to fail
         mock_check_env.side_effect = SystemExit(1)
-        
+
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
             f.write("https://huggingface.co/bert-base-uncased")
             temp_filename = f.name
-        
+
         try:
             with patch('sys.argv', ['main.py', temp_filename]):
                 with pytest.raises(SystemExit):
                     main()
-            
+
             mock_check_env.assert_called_once()
-            
+
         finally:
             os.unlink(temp_filename)
 
@@ -149,7 +149,7 @@ class TestCLIIntegration:
         # Test that the parser can handle the expected input file format
         with patch('sys.argv', ['main.py', 'test_input.txt']):
             args = parse_args()
-            
+
             assert hasattr(args, 'args')
             assert 'test_input.txt' in args.args
 
@@ -167,7 +167,7 @@ class TestCLIIntegration:
         with pytest.raises(SystemExit) as exc_info:
             with patch('sys.argv', ['main.py', '--help']):
                 parse_args()
-        
+
         # Help should exit with code 0
         assert exc_info.value.code == 0
 
@@ -220,23 +220,23 @@ class TestCLICompatibility:
         mock_check_env.return_value = None
         mock_category.return_value = {}
         mock_handle.return_value = {}
-        
+
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
             f.write("https://example.com")
             temp_filename = f.name
-        
+
         try:
             with patch('sys.argv', ['main.py', temp_filename]):
                 result = main()
-            
+
             # Should return None or 0 for success
             assert result is None or result == 0
-            
+
         except Exception as e:
             # If it fails, it should be due to expected reasons (like missing dependencies)
             # not due to function signature issues
             assert not isinstance(e, TypeError)
-            
+
         finally:
             os.unlink(temp_filename)
 

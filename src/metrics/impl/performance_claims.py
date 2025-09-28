@@ -1,6 +1,8 @@
+"""Performance claims metric implementation."""
 from __future__ import annotations
 from typing import Dict, Any
 from ..types import MetricResult
+
 
 class PerformanceClaimsMetric:
     """
@@ -10,6 +12,7 @@ class PerformanceClaimsMetric:
     id = "performance_claims"
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
+        """Compute performance claims metric."""
         import time
         start = time.time()
         if "requirements_score" in context:
@@ -21,4 +24,9 @@ class PerformanceClaimsMetric:
             value = passed / total
             details = {"mode": "simple", "passed": passed, "total": total}
         seconds = time.time() - start
-        return MetricResult(self.id, value, details=details, binary=0, seconds=seconds)
+        return MetricResult(
+            self.id,
+            value,
+            details=details,
+            binary=0,
+            seconds=seconds)

@@ -1,6 +1,8 @@
+"""Ramp-up time metric implementation."""
 from __future__ import annotations
 from typing import Dict, Any
 from ..types import MetricResult
+
 
 class RampUpTimeMetric:
     """
@@ -10,10 +12,16 @@ class RampUpTimeMetric:
     id = "ramp_up_time"
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
+        """Compute ramp-up time metric."""
         import time
         start = time.time()
-        r = context.get("ramp", {})
-        vals = [float(r[k]) for k in ("likes_norm","downloads_norm","recency_norm") if k in r]
-        value = sum(vals)/len(vals) if vals else 0.0
+        ramp_up = context.get("ramp_up", {})
+        value = float(ramp_up.get("example_norm", 0.0))
         seconds = time.time() - start
-        return MetricResult(self.id, value, details={"components": vals}, binary=0, seconds=seconds)
+        return MetricResult(
+            self.id,
+            value,
+            details={
+                "ramp_up": ramp_up},
+            binary=0,
+            seconds=seconds)

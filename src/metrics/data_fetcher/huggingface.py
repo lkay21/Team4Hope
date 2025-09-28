@@ -42,7 +42,9 @@ def get_huggingface_model_data(model_url: str) -> Dict[str, Any]:
                 try:
                     fi = api.get_paths_info(model_id, fp, repo_type="model")
                     if fi and len(fi) > 0:  # fi is a list
-                        size = fi[0].size   # Get size from the first (and typically only) RepoFile object
+                        # Get size from the first (and typically only) RepoFile
+                        # object
+                        size = fi[0].size
                         if size:
                             total_size += int(size)
                 except Exception:
@@ -81,8 +83,16 @@ def get_huggingface_dataset_data(dataset_url: str) -> Dict[str, Any]:
         try:
             builder = load_dataset_builder(dataset_id)
             data["features"] = str(getattr(builder.info, "features", "") or "")
-            data["splits"] = list(getattr(builder.info, "splits", {}).keys()) if getattr(builder.info, "splits", None) else []
-            data["description"] = getattr(builder.info, "description", "") or ""
+            data["splits"] = list(
+                getattr(
+                    builder.info,
+                    "splits",
+                    {}).keys()) if getattr(
+                builder.info,
+                "splits",
+                None) else []
+            data["description"] = getattr(
+                builder.info, "description", "") or ""
         except Exception as e:
             logger.debug(f"Could not load dataset builder: {e}")
             data["features"], data["splits"], data["description"] = "", [], ""
@@ -90,6 +100,7 @@ def get_huggingface_dataset_data(dataset_url: str) -> Dict[str, Any]:
     except Exception as e:
         logger.debug(f"Failed to fetch HF dataset data: {e}")
         return {}
+
 
 def get_huggingface_file(model_url: str):
     from src.metrics.data_fetcher import extract_hf_model_id
@@ -100,7 +111,10 @@ def get_huggingface_file(model_url: str):
         return None
     try:
         from huggingface_hub import hf_hub_download
-        local_file_path = hf_hub_download(repo_id=repo_id, filename=file_name, cache_dir="/home/shay/a/kay21/Documents/Team4Hope/hf_cache")
+        local_file_path = hf_hub_download(
+            repo_id=repo_id,
+            filename=file_name,
+            cache_dir="/home/shay/a/kay21/Documents/Team4Hope/hf_cache")
     except Exception as e:
         logger.debug(f"Failed to download {file_name} from {repo_id}: {e}")
         return None

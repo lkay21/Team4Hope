@@ -8,7 +8,8 @@ from .timing import time_call
 
 # NEW imports for parallelism
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import os, time
+import os
+import time
 
 
 def build_registry_from_plan() -> MetricRegistry:
@@ -33,10 +34,12 @@ def build_registry_from_plan() -> MetricRegistry:
     return reg
 
 
-def _compute_one(op: Operationalization, metric, ctx: Dict[str, Any]) -> Tuple[str, MetricResult]:
+def _compute_one(op: Operationalization, metric,
+                 ctx: Dict[str, Any]) -> Tuple[str, MetricResult]:
     # time just the metric compute
     def thunk():
-        return metric.compute(ctx)  # returns MetricResult with value set (0..1)
+        # returns MetricResult with value set (0..1)
+        return metric.compute(ctx)
     r, secs = time_call(thunk)
 
     # normalize + binarize
@@ -88,7 +91,8 @@ def run_metrics(
         return metric_id.startswith("dataset_")
 
     def should_use_both(metric_id: str) -> bool:
-        return metric_id.startswith("code_dataset_") or metric_id.startswith("dataset_code_")
+        return metric_id.startswith(
+            "code_dataset_") or metric_id.startswith("dataset_code_")
 
     def compute_metric(op, metric, ctx):
         metric_id = op.metric_id
@@ -127,7 +131,7 @@ def run_metrics(
                 mid, res = fut.result()
                 results[mid] = res
 
-    #latencies are last 4 values of context
+    # latencies are last 4 values of context
     latencies = {k: v for k, v in ctx.items() if k.endswith("_latency")}
     summary = netscore(results, ops)
 

@@ -4,6 +4,9 @@ Comprehensive tests for metrics runner and schema validation.
 Tests metric orchestration, timing, NDJSON output formatting,
 and schema compliance.
 """
+from src.metrics.types import MetricResult
+from src.metrics.ops_plan import default_ops
+from src.metrics.runner import run_metrics
 import pytest
 import sys
 import os
@@ -12,11 +15,8 @@ from unittest.mock import Mock, patch, MagicMock
 from typing import Dict, Any
 
 # Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src'))
-
-from src.metrics.runner import run_metrics
-from src.metrics.ops_plan import default_ops
-from src.metrics.types import MetricResult
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), 'src'))
 
 
 class TestMetricsRunner:
@@ -32,10 +32,10 @@ class TestMetricsRunner:
             "repo_meta": {"top_contributor_pct": 0.3},
             "size_components": {"raspberry_pi": 0.5, "jetson_nano": 0.8, "desktop_pc": 0.9}
         }
-        
+
         # Run metrics with proper signature
         results, summary, latencies = run_metrics(default_ops, test_data)
-        
+
         # Check that results were returned
         assert isinstance(results, dict)
         assert isinstance(summary, dict)
@@ -50,7 +50,7 @@ class TestMetricsRunner:
     def test_run_metrics_empty_data(self):
         """Test metrics runner with empty data."""
         results, summary, latencies = run_metrics(default_ops, {})
-        
+
         # Should handle gracefully
         assert isinstance(results, dict)
         assert isinstance(summary, dict)
@@ -62,9 +62,9 @@ class TestMetricsRunner:
             "license": "mit",
             "size_components": {"raspberry_pi": 0.3}
         }
-        
+
         results, summary, latencies = run_metrics(default_ops, partial_data)
-        
+
         # Should work with partial data
         assert isinstance(results, dict)
         assert summary["NetScore_weighted"] >= 0.0
@@ -72,15 +72,15 @@ class TestMetricsRunner:
     def test_run_metrics_timing_recorded(self):
         """Test that metrics runner records timing information."""
         test_data = {"license": "apache-2.0"}
-        
+
         results, summary, latencies = run_metrics(default_ops, test_data)
-        
+
         # Check that timing is recorded (components should have timing info)
         assert "components" in summary
         assert len(summary["components"]) > 0
         # Check that at least one component has timing
         assert any("seconds" in comp for comp in summary["components"])
-        
+
         # Check that individual metrics have timing
         for result in results.values():
             if hasattr(result, 'seconds'):
@@ -95,12 +95,12 @@ class TestMetricsRunner:
             "repo_meta": {"top_contributor_pct": 0.1},
             "size_components": {"raspberry_pi": 1.0, "jetson_nano": 1.0, "desktop_pc": 1.0, "aws_server": 1.0}
         }
-        
+
         results, summary, latencies = run_metrics(default_ops, test_data)
-        
+
         # Net score should be in valid range
         assert 0.0 <= summary["NetScore_weighted"] <= 1.0
-        
+
         # Individual metric scores should be in valid range
         for result in results.values():
             if hasattr(result, 'value'):
@@ -129,16 +129,16 @@ class TestNDJSONSchema:
             "dataset_quality": 0.8,
             "code_quality": 0.85
         }
-        
+
         # Convert to JSON and back to ensure it's valid JSON
         json_str = json.dumps(sample_output)
         parsed = json.loads(json_str)
-        
+
         # Check required fields
         required_fields = ["name", "net_score"]
         for field in required_fields:
             assert field in parsed
-        
+
         # Check that scores are numeric and in range
         for key, value in parsed.items():
             if key not in ["name", "category"] and value is not None:
@@ -156,16 +156,16 @@ class TestNDJSONSchema:
             "raspberry_pi": None,
             "code_quality": 0.7
         }
-        
+
         # Should be valid JSON
         json_str = json.dumps(sample_output)
         parsed = json.loads(json_str)
-        
+
         # None values should be preserved
         assert parsed["category"] is None
         assert parsed["performance_claims"] is None
         assert parsed["raspberry_pi"] is None
-        
+
         # Non-None values should be valid
         assert parsed["net_score"] == 0.5
         assert parsed["code_quality"] == 0.7
@@ -177,19 +177,19 @@ class TestNDJSONSchema:
             {"name": "model2", "net_score": 0.6},
             {"name": "model3", "net_score": 0.9}
         ]
-        
+
         # Convert to NDJSON format
         ndjson_lines = []
         for entry in entries:
             ndjson_lines.append(json.dumps(entry))
-        
+
         ndjson_output = '\n'.join(ndjson_lines)
-        
+
         # Parse each line
         parsed_entries = []
         for line in ndjson_output.strip().split('\n'):
             parsed_entries.append(json.loads(line))
-        
+
         assert len(parsed_entries) == 3
         assert parsed_entries[0]["name"] == "model1"
         assert parsed_entries[1]["name"] == "model2"
@@ -213,11 +213,11 @@ class TestNDJSONSchema:
             "dataset_quality": 0.8,                 # float or None
             "code_quality": 0.85                    # float or None
         }
-        
+
         # Should serialize successfully
         json_str = json.dumps(sample_output)
         parsed = json.loads(json_str)
-        
+
         # Check types
         assert isinstance(parsed["name"], str)
         assert isinstance(parsed["category"], str)
@@ -235,7 +235,7 @@ class TestNDJSONSchema:
             json_str = json.dumps(output)
             parsed = json.loads(json_str)
             assert 0.0 <= parsed["net_score"] <= 1.0
-        
+
         # Test edge cases that should be handled
         edge_cases = {
             "name": "test",
@@ -243,10 +243,10 @@ class TestNDJSONSchema:
             "raspberry_pi": 0.000000001,  # Very close to 0
             "aws_server": 1.0  # Exactly 1
         }
-        
+
         json_str = json.dumps(edge_cases)
         parsed = json.loads(json_str)
-        
+
         for key, value in parsed.items():
             if key != "name" and value is not None:
                 assert 0.0 <= value <= 1.0
@@ -277,37 +277,37 @@ class TestMetricsIntegration:
                 "aws_server": 0.95
             }
         }
-        
-        # Run metrics with proper signature  
+
+        # Run metrics with proper signature
         results, summary, latencies = run_metrics(default_ops, test_data)
-        
+
         # Create NDJSON-style output
         ndjson_output = {
             "name": "test-model",
             "category": "MODEL",
             "net_score": summary["NetScore_weighted"]
         }
-        
+
         # Add individual metric scores
         for metric_id, result in results.items():
             if hasattr(result, 'value'):
                 ndjson_output[metric_id] = result.value
-        
+
         # Add size scores if available
         if "size" in results and hasattr(results["size"], 'details'):
             size_details = results["size"].details.get("size_score", {})
             for hardware, score in size_details.items():
                 ndjson_output[hardware] = score
-        
+
         # Validate the output
         json_str = json.dumps(ndjson_output)
         parsed = json.loads(json_str)
-        
+
         # Should have all expected fields
         assert "name" in parsed
         assert "net_score" in parsed
         assert 0.0 <= parsed["net_score"] <= 1.0
-        
+
         # Check some expected metrics
         if "availability" in parsed:
             assert parsed["availability"] == 1.0  # All components true
@@ -325,10 +325,11 @@ class TestMetricsIntegration:
                 "raspberry_pi": "invalid"  # Invalid type
             }
         }
-        
+
         # Should handle gracefully without crashing
-        results, summary, latencies = run_metrics(default_ops, problematic_data)
-        
+        results, summary, latencies = run_metrics(
+            default_ops, problematic_data)
+
         assert isinstance(results, dict)
         assert isinstance(summary, dict)
         assert 0.0 <= summary["NetScore_weighted"] <= 1.0
@@ -340,13 +341,13 @@ class TestMetricsIntegration:
             "requirements_score": 0.6,
             "availability": {"has_code": True, "has_dataset": False, "links_ok": True}
         }
-        
+
         # Run metrics multiple times
         results_list = []
         for _ in range(5):
             results, summary, latencies = run_metrics(default_ops, test_data)
             results_list.append((results, summary))
-        
+
         # Check consistency (allowing for small timing variations)
         first_summary = results_list[0][1]
         for results, summary in results_list[1:]:
@@ -355,19 +356,19 @@ class TestMetricsIntegration:
     def test_empty_metrics_pipeline(self):
         """Test metrics pipeline with completely empty data."""
         empty_data = {}
-        
+
         results, summary, latencies = run_metrics(default_ops, empty_data)
-        
+
         # Should produce valid output even with no data
         ndjson_output = {
             "name": "empty-test",
             "net_score": summary["NetScore_weighted"]
         }
-        
+
         # Should be valid JSON
         json_str = json.dumps(ndjson_output)
         parsed = json.loads(json_str)
-        
+
         assert "name" in parsed
         assert "net_score" in parsed
         assert parsed["net_score"] >= 0.0
@@ -381,20 +382,20 @@ class TestSchemaCompliance:
         # Based on the project requirements, these should be the expected fields
         expected_fields = [
             "name",
-            "net_score", 
+            "net_score",
             "ramp_up_time",
             "bus_factor",
             "license_compliance",
             "availability",
             "performance_claims",
             "raspberry_pi",
-            "jetson_nano", 
+            "jetson_nano",
             "desktop_pc",
             "aws_server",
             "dataset_quality",
             "code_quality"
         ]
-        
+
         # Create sample output with all fields
         sample_output = {}
         for field in expected_fields:
@@ -402,11 +403,11 @@ class TestSchemaCompliance:
                 sample_output[field] = "test-model"
             else:
                 sample_output[field] = 0.5  # Default numeric value
-        
+
         # Should be valid JSON
         json_str = json.dumps(sample_output)
         parsed = json.loads(json_str)
-        
+
         # All expected fields should be present
         for field in expected_fields:
             assert field in parsed
@@ -423,15 +424,15 @@ class TestSchemaCompliance:
             "jetson_nano": None,  # Hardware might not be tested
             "code_quality": None  # Might not be available
         }
-        
+
         # Should serialize properly
         json_str = json.dumps(output_with_optional)
         parsed = json.loads(json_str)
-        
+
         # Required fields should be present
         assert "name" in parsed
         assert "net_score" in parsed
-        
+
         # None values should be preserved
         assert parsed["category"] is None
         assert parsed["performance_claims"] is None

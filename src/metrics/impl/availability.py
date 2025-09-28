@@ -1,6 +1,8 @@
+"""Availability metric implementation."""
 from __future__ import annotations
 from typing import Dict, Any
 from ..types import MetricResult
+
 
 class AvailabilityMetric:
     """
@@ -10,12 +12,27 @@ class AvailabilityMetric:
     id = "availability"
 
     def compute(self, context: Dict[str, Any]) -> MetricResult:
+        """Compute availability metric based on link availability data."""
         import time
         start = time.time()
-        a = context.get("availability", {})
-        has_code = bool(a.get("has_code", False))
-        has_data = bool(a.get("has_dataset", False))
-        links_ok = bool(a.get("links_ok", False))
-        value = (has_code + has_data + links_ok) / 3.0
+        availability = context.get("availability", {})
+        
+        # Get individual components
+        has_code = availability.get("has_code", False)
+        has_dataset = availability.get("has_dataset", False) 
+        links_ok = availability.get("links_ok", False)
+        
+        # Calculate value as average of the three components
+        components = [has_code, has_dataset, links_ok]
+        value = sum(components) / len(components)
+        
         seconds = time.time() - start
-        return MetricResult(self.id, value, details={"has_code": has_code, "has_dataset": has_data, "links_ok": links_ok}, binary=0, seconds=seconds)
+        return MetricResult(
+            self.id,
+            value,
+            details={
+                "has_code": has_code,
+                "has_dataset": has_dataset,
+                "links_ok": links_ok},
+            binary=0,
+            seconds=seconds)
