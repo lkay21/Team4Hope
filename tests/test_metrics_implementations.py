@@ -323,8 +323,8 @@ class TestPerformanceClaimsMetric:
         metric = PerformanceClaimsMetric()
         result = metric.compute(context)
         
-        # Should get high score due to BERT context analysis
-        assert result.value > 0.8
+        # Should get binary 1.0 for BERT
+        assert result.value == 1.0
         assert result.details["mode"] == "context_analysis"
         
     def test_performance_claims_context_analysis_huggingface(self):
@@ -332,15 +332,14 @@ class TestPerformanceClaimsMetric:
         context = {
             "requirements_passed": 0,
             "requirements_total": 1,
-            "model_url": "https://huggingface.co/some-model",
-            "dataset_url": "https://some-dataset.com"
+            "model_url": "https://huggingface.co/some-model"
         }
         
         metric = PerformanceClaimsMetric()
         result = metric.compute(context)
         
-        # Should get moderate score
-        assert result.value > 0.4
+        # Should get binary 0.0 for generic model
+        assert result.value == 0.0
         assert result.details["mode"] == "context_analysis"
         
     def test_performance_claims_has_meaningful_context_true(self):
@@ -363,8 +362,8 @@ class TestPerformanceClaimsMetric:
         context = {"some_other_field": "value"}
         
         score = metric._analyze_context_for_performance_claims(context)
-        # Should return baseline score
-        assert score == 0.2
+        # Should return binary 0.0 for no indicators
+        assert score == 0.0
 
 
 class TestCodeQualityMetric:
