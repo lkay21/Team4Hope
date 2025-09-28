@@ -31,7 +31,8 @@ def get_github_repo_data(code_url: str) -> Dict[str, Any]:
     }
 
     try:
-        repo_resp = safe_request(f"https://api.github.com/repos/{owner}/{repo}", headers=headers)
+        repo_resp = safe_request(
+            f"https://api.github.com/repos/{owner}/{repo}", headers=headers)
         if repo_resp:
             rd = repo_resp.json()
             data.update({
@@ -42,7 +43,9 @@ def get_github_repo_data(code_url: str) -> Dict[str, Any]:
                 "license": (rd.get("license") or {}).get("spdx_id") if rd.get("license") else None,
             })
 
-        contrib_resp = safe_request(f"https://api.github.com/repos/{owner}/{repo}/contributors", headers=headers)
+        contrib_resp = safe_request(
+            f"https://api.github.com/repos/{owner}/{repo}/contributors",
+            headers=headers)
         if contrib_resp:
             lst = contrib_resp.json()
             if isinstance(lst, list) and lst:
@@ -62,7 +65,8 @@ def get_github_repo_data(code_url: str) -> Dict[str, Any]:
             )
             if tree_resp and tree_resp.ok:
                 tree = tree_resp.json().get("tree", [])
-                data["files"] = [it["path"] for it in tree if it.get("type") == "blob"]
+                data["files"] = [it["path"]
+                                 for it in tree if it.get("type") == "blob"]
                 break
     except Exception as e:
         logger.debug(f"Failed to fetch GitHub data: {e}")

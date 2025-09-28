@@ -3,6 +3,7 @@ from typing import Dict, List, Any
 from .types import MetricResult
 from .operationalization import Operationalization
 
+
 def netscore(
     results: Dict[str, MetricResult],
     ops: List[Operationalization]
@@ -22,7 +23,8 @@ def netscore(
         total_w += w
 
     weighted = sum(c["binary"] * c["weight"] for c in comps) / (total_w or 1.0)
-    # Also provide a final 0/1 view; threshold configurable via NETSCORE_THRESHOLD
+    # Also provide a final 0/1 view; threshold configurable via
+    # NETSCORE_THRESHOLD
     import os
     thresh = float(os.getenv("NETSCORE_THRESHOLD", "0.5"))
     net_pass = 1 if weighted >= thresh else 0

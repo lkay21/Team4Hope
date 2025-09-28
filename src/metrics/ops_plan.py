@@ -7,12 +7,18 @@ from .operationalization import Operationalization
 # CodeQuality(0.15), PerformanceClaims(0.20).
 
 default_ops = [
-    Operationalization("size", {}, 0.05, "minmax", {"min": 0.0, "max": 1.0}, True),
+    Operationalization("size", {}, 0.05, "minmax", {
+                       "min": 0.0, "max": 1.0}, True),
     Operationalization("license_compliance", {}, 0.10, "identity", {}, True),
-    Operationalization("ramp_up_time", {}, 0.10, "minmax", {"min": 0.0, "max": 1.0}, True),
-    Operationalization("bus_factor", {}, 0.10, "minmax", {"min": 0.0, "max": 1.0}, True),
+    Operationalization("ramp_up_time", {}, 0.10, "minmax",
+                       {"min": 0.0, "max": 1.0}, True),
+    Operationalization("bus_factor", {}, 0.10, "minmax",
+                       {"min": 0.0, "max": 1.0}, True),
     Operationalization("availability", {}, 0.15, "identity", {}, True),
-    Operationalization("dataset_quality", {}, 0.15, "minmax", {"min": 0.0, "max": 1.0}, True),
-    Operationalization("code_quality", {}, 0.15, "minmax", {"min": 0.0, "max": 1.0}, True),
-    Operationalization("performance_claims", {}, 0.20, "minmax", {"min": 0.0, "max": 1.0}, True),
+    Operationalization("dataset_quality", {}, 0.15, "minmax", {
+                       "min": 0.0, "max": 1.0}, True),
+    Operationalization("code_quality", {}, 0.15, "minmax",
+                       {"min": 0.0, "max": 1.0}, True),
+    Operationalization("performance_claims", {}, 0.20,
+                       "minmax", {"min": 0.0, "max": 1.0}, True),
 ]

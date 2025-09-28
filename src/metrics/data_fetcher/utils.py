@@ -11,7 +11,8 @@ from src.logger import get_logger
 logger = get_logger("data_fetcher.utils")
 
 
-def safe_request(url: str, timeout: int = 10, **kwargs) -> Optional[requests.Response]:
+def safe_request(url: str, timeout: int = 10, **
+                 kwargs) -> Optional[requests.Response]:
     """Make a safe HTTP GET request with error handling."""
     try:
         resp = requests.get(url, timeout=timeout, **kwargs)
@@ -51,7 +52,8 @@ def extract_hf_model_id(hf_url: str) -> Optional[str]:
                 # e.g., https://huggingface.co/datasets/glue  -> "glue"
                 return parts[1]
             elif len(parts) >= 3:
-                # e.g., https://huggingface.co/datasets/user/name -> "user/name"
+                # e.g., https://huggingface.co/datasets/user/name ->
+                # "user/name"
                 return f"{parts[1]}/{parts[2]}"
 
         # model URLs can be:
@@ -67,9 +69,11 @@ def extract_hf_model_id(hf_url: str) -> Optional[str]:
     return None
 
 
-def check_availability(code_url: str, dataset_url: str, model_url: str) -> Dict[str, Any]:
+def check_availability(code_url: str, dataset_url: str,
+                       model_url: str) -> Dict[str, Any]:
     """HEAD the URLs and report availability of each and overall links_ok."""
-    results = {"has_code": False, "has_dataset": False, "has_model": False, "links_ok": False}
+    results = {"has_code": False, "has_dataset": False,
+               "has_model": False, "links_ok": False}
     urls = [("code", code_url), ("dataset", dataset_url), ("model", model_url)]
     ok = 0
     for name, url in urls:

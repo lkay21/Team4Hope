@@ -5,14 +5,17 @@ from typing import Dict, Any, Literal
 
 Norm = Literal["identity", "minmax", "invert_minmax", "zscore"]
 
+
 @dataclass(frozen=True)
 class Operationalization:
     metric_id: str
     params: Dict[str, Any]
     weight: float                   # >= 0
     normalization: Norm
-    norm_params: Dict[str, float]   # {"min":..,"max":..} or {"mu":..,"sigma":..}
+    # {"min":..,"max":..} or {"mu":..,"sigma":..}
+    norm_params: Dict[str, float]
     greater_is_better: bool = True  # for identity
+
 
 def normalize(value: float, op: Operationalization) -> float:
     n = op.normalization
@@ -21,17 +24,21 @@ def normalize(value: float, op: Operationalization) -> float:
         return value if op.greater_is_better else -value
     if n == "minmax":
         mn, mx = p.get("min", 0.0), p.get("max", 1.0)
-        if mx == mn: return 0.0
+        if mx == mn:
+            return 0.0
         return (value - mn) / (mx - mn)
     if n == "invert_minmax":
         mn, mx = p.get("min", 0.0), p.get("max", 1.0)
-        if mx == mn: return 0.0
+        if mx == mn:
+            return 0.0
         return 1.0 - (value - mn) / (mx - mn)
     if n == "zscore":
         mu, sigma = p.get("mu", 0.0), p.get("sigma", 1.0)
-        if sigma == 0: return 0.0
+        if sigma == 0:
+            return 0.0
         return (value - mu) / sigma
     raise ValueError(f"Unknown normalization: {n}")
+
 
 def binarize(score: float, threshold: float | None = None) -> int:
     """

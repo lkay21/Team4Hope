@@ -63,16 +63,19 @@ print(__doc__)
 if __name__ == "__main__":
     import os
     import sys
-    
+
     # Verify test directory exists
     test_dir = "tests"
     if os.path.exists(test_dir):
-        test_files = [f for f in os.listdir(test_dir) if f.startswith('test_') and f.endswith('.py')]
-        print(f"\n🎉 SUCCESS: Found {len(test_files)} test files in {test_dir}/")
+        test_files = [f for f in os.listdir(
+            test_dir) if f.startswith('test_') and f.endswith('.py')]
+        print(
+            f"\n🎉 SUCCESS: Found {len(test_files)} test files in {test_dir}/")
         for test_file in sorted(test_files):
             print(f"   ✅ {test_file}")
-        
-        print(f"\n📈 TOTAL TEST COVERAGE: 2,299+ lines across {len(test_files)} test suites")
+
+        print(
+            f"\n📈 TOTAL TEST COVERAGE: 2,299+ lines across {len(test_files)} test suites")
         print("🚀 READY FOR PRODUCTION: Comprehensive testing complete!")
     else:
         print("❌ Tests directory not found!")

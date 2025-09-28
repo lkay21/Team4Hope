@@ -28,11 +28,16 @@ UrlCategory = Literal["MODEL", "DATASET", "CODE"]
 
 
 # URL patterns
-HF_MODEL_PATTERN = re.compile(r"^https://huggingface\.co/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
-HF_DATASET_PATTERN = re.compile(r"^https://huggingface\.co/datasets/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
-GITHUB_CODE_PATTERN = re.compile(r"^https://github\.com/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
-GITLAB_CODE_PATTERN = re.compile(r"^https://gitlab\.com/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
-HF_SPACES_PATTERN = re.compile(r"^https://huggingface\.co/spaces/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
+HF_MODEL_PATTERN = re.compile(
+    r"^https://huggingface\.co/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
+HF_DATASET_PATTERN = re.compile(
+    r"^https://huggingface\.co/datasets/[^/]+/[^/]+($|/tree/|/blob/|/main|/resolve/)")
+GITHUB_CODE_PATTERN = re.compile(
+    r"^https://github\.com/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
+GITLAB_CODE_PATTERN = re.compile(
+    r"^https://gitlab\.com/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
+HF_SPACES_PATTERN = re.compile(
+    r"^https://huggingface\.co/spaces/[^/]+/[^/]+($|/tree/|/blob/|/main|/commit/|/releases/)")
 
 
 # Purdue GenAI Studio
@@ -40,6 +45,7 @@ PURDUE_GENAI_API_KEY = os.getenv("GEN_AI_STUDIO_API_KEY")
 PURDUE_GENAI_URL = "https://genai.rcac.purdue.edu/api/chat/completions"
 
 # ---------- helpers ----------
+
 
 def _valid_code_url(url: Optional[str]) -> bool:
     if url:
@@ -56,7 +62,8 @@ def _valid_dataset_url(url: Optional[str]) -> bool:
     if url:
         if HF_DATASET_PATTERN.match(url):
             return True
-        # Fallback: ask GenAI if this is a valid dataset URL (for other sources)
+        # Fallback: ask GenAI if this is a valid dataset URL (for other
+        # sources)
         if PURDUE_GENAI_API_KEY:
             prompt = f"Is the following URL a valid dataset? Reply 'yes' or 'no' only. URL: {url}"
             result = _genai_single_url(prompt)
@@ -91,7 +98,8 @@ def _genai_single_url(prompt: str) -> Optional[str]:
             ],
             "temperature": 0,
         }
-        resp = requests.post(PURDUE_GENAI_URL, headers=headers, json=body, timeout=15)
+        resp = requests.post(
+            PURDUE_GENAI_URL, headers=headers, json=body, timeout=15)
         resp.raise_for_status()
         data = resp.json()
         text: str = data["choices"][0]["message"]["content"].strip()
@@ -116,7 +124,9 @@ def get_dataset_url_from_genai(model_url: str) -> Optional[str]:
     return url if _valid_dataset_url(url) else None
 
 
-def get_url_category(models: Dict[str, List[Optional[str]]]) -> Dict[str, Optional[UrlCategory]]:
+def get_url_category(models: Dict[str,
+                                  List[Optional[str]]]) -> Dict[str,
+                                                                Optional[UrlCategory]]:
     """
     Classify each entry and opportunistically fill missing links via GenAI.
 
@@ -135,7 +145,8 @@ def get_url_category(models: Dict[str, List[Optional[str]]]) -> Dict[str, Option
         code_url, dataset_url, model_url = links[0], links[1], links[2]
 
         # Category: for Phase 1 we primarily tag MODEL rows
-        categories[key] = "MODEL" if _valid_model_url(model_url) or (model_url and model_url.strip()) else None
+        categories[key] = "MODEL" if _valid_model_url(
+            model_url) or (model_url and model_url.strip()) else None
 
         # Fill missing links using Purdue GenAI Studio (LLM usage)
         if not _valid_code_url(code_url) and model_url:
@@ -180,7 +191,7 @@ def handle_url(models: Dict[str, List[Optional[str]]]) -> Dict[str, dict]:
             "ramp_up_time": "hf_model_latency",
             "bus_factor": "github_latency",
             "performance_claims": "hf_model_latency",
-            "license_compliance": "github_latency",  
+            "license_compliance": "github_latency",
             "size": "hf_model_latency",
             "availability": "availability_latency",
             "dataset_quality": "hf_dataset_latency",
@@ -200,7 +211,8 @@ def handle_url(models: Dict[str, List[Optional[str]]]) -> Dict[str, dict]:
             return int(m * 1000) if m is not None else None
 
         size_metric = results.get("size")
-        size_score = size_metric.details.get("size_score") if size_metric and hasattr(size_metric, "details") else None
+        size_score = size_metric.details.get(
+            "size_score") if size_metric and hasattr(size_metric, "details") else None
 
         ndjson_args = {
             # summary
@@ -228,6 +240,7 @@ def handle_url(models: Dict[str, List[Optional[str]]]) -> Dict[str, dict]:
             "code_quality_latency": get_latency("code_quality"),
         }
 
-        ndjsons[key] = default_ndjson(model=model_url, category=categories.get(key), **ndjson_args)
+        ndjsons[key] = default_ndjson(
+            model=model_url, category=categories.get(key), **ndjson_args)
 
     return ndjsons
