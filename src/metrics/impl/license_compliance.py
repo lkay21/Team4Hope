@@ -52,7 +52,6 @@ class LicenseComplianceMetric:
                         # Search for license keywords in the README
                         for lic in allow:
                             if re.search(rf"\b{re.escape(lic)}\b", readme_text):
-                                print("DO TWICE")
                                 detected_license = lic
                                 value = 1.0
                                 break
