@@ -114,7 +114,7 @@ def get_huggingface_file(model_url: str):
         local_file_path = hf_hub_download(
             repo_id=repo_id,
             filename=file_name,
-            cache_dir="/home/shay/a/kay21/Documents/Team4Hope/hf_cache")
+            cache_dir="./hf_cache")
     except Exception as e:
         logger.debug(f"Failed to download {file_name} from {repo_id}: {e}")
         return None
