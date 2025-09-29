@@ -68,6 +68,7 @@ def fetch_comprehensive_metrics_data(
             data["hf_model_latency"] = time.time() - hf_model_start
             if hf_m:
                 hf_model_data = hf_m  # Store for later
+                # Extract license from HuggingFace data (takes precedence)
                 if hf_m.get("license"):
                     data["license"] = hf_m.get("license")
                 downloads = int(hf_m.get("downloads", 0) or 0)
@@ -104,8 +105,6 @@ def fetch_comprehensive_metrics_data(
                     "documentation": 0.9 if desc else 0.2,
                     "class_balance": 0.7 if splits else 0.3,
                 }
-                if not data.get("license") and hf_d.get("license"):
-                    data["license"] = hf_d["license"]
 
         # GitHub repo
         if code_url and "github.com" in code_url:
@@ -114,6 +113,9 @@ def fetch_comprehensive_metrics_data(
             github_data = df.get_github_repo_data(code_url)
             data["github_latency"] = time.time() - gh_start
             if github_data:
+                # Extract license from GitHub data (only if HF license not set)
+                if not data["license"] and github_data.get("license"):
+                    data["license"] = github_data.get("license")
                 data["repo_meta"] = github_data.get("contributors", {})
                 files = github_data.get("files", [])
                 data["code_quality"] = df.analyze_code_quality(files)
@@ -121,8 +123,6 @@ def fetch_comprehensive_metrics_data(
                 data.setdefault("ramp", {})
                 data["ramp"].setdefault(
                     "likes_norm", df.normalize_stars(stars))
-                if not data.get("license") and github_data.get("license"):
-                    data["license"] = github_data["license"]
 
                 # Refine performance claims analysis with GitHub files if we
                 # have HF model data
@@ -204,3 +204,4 @@ def fetch_comprehensive_metrics_data(
             "hf_dataset_latency": None,
             "github_latency": None,
         }
+
