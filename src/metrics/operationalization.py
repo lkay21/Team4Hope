@@ -22,7 +22,7 @@ def normalize(value: float, op: Operationalization) -> float:
     p = op.norm_params or {}
     if n == "identity":
         return value if op.greater_is_better else -value
-    if n == "minmax":
+    # if n == "minmax":
         mn, mx = p.get("min", 0.0), p.get("max", 1.0)
         if mx == mn:
             return 0.0
